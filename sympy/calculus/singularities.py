@@ -145,12 +145,11 @@ def monotonicity_helper(expression, predicate, interval=S.Reals, symbol=None):
     expression = sympify(expression)
     free = expression.free_symbols
 
-    if symbol is None:
-        if len(free) > 1:
-            raise NotImplementedError(
-                'The function has not yet been implemented'
-                ' for all multivariate expressions.'
-            )
+    if symbol is None and len(free) > 1:
+        raise NotImplementedError(
+            'The function has not yet been implemented'
+            ' for all multivariate expressions.'
+        )
 
     variable = symbol or (free.pop() if free else Symbol('x'))
     derivative = expression.diff(variable)

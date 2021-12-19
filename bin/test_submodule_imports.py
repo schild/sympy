@@ -63,7 +63,7 @@ def test_submodule_imports():
         if not mod.startswith('sympy'):
             continue
 
-        if not mod.count('.') == 1:
+        if mod.count('.') != 1:
             continue
 
         _, submodule = mod.split('.')

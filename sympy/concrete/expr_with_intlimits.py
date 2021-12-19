@@ -121,16 +121,16 @@ class ExprWithIntLimits(ExprWithLimits):
                     raise ValueError("Index transformation is not linear")
                 alpha = p.coeff_monomial(var)
                 beta = p.coeff_monomial(S.One)
-                if alpha.is_number:
-                    if alpha == S.One:
-                        limits.append((newvar, alpha*limit[1] + beta, alpha*limit[2] + beta))
-                    elif alpha == S.NegativeOne:
-                        limits.append((newvar, alpha*limit[2] + beta, alpha*limit[1] + beta))
-                    else:
-                        raise ValueError("Linear transformation results in non-linear summation stepsize")
-                else:
-                    # Note that the case of alpha being symbolic can give issues if alpha < 0.
+                if alpha.is_number and alpha == S.One:
+                    limits.append((newvar, alpha*limit[1] + beta, alpha*limit[2] + beta))
+                elif (
+                    alpha.is_number
+                    and alpha == S.NegativeOne
+                    or not alpha.is_number
+                ):
                     limits.append((newvar, alpha*limit[2] + beta, alpha*limit[1] + beta))
+                else:
+                    raise ValueError("Linear transformation results in non-linear summation stepsize")
             else:
                 limits.append(limit)
 

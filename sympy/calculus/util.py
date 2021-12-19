@@ -323,8 +323,7 @@ def not_empty_in(finset_intersection, *syms):
 
         # domain in the interval
         expr_with_sing = Intersection(_domain1, _domain2)
-        expr_domain = Complement(expr_with_sing, _singularities)
-        return expr_domain
+        return Complement(expr_with_sing, _singularities)
 
     if isinstance(_sets, Interval):
         return Union(*[elm_domain(element, _sets) for element in finite_set])
@@ -615,9 +614,6 @@ def lcim(numbers):
     elif all(num.is_rational for num in numbers):
         result = lcm_list(numbers)
 
-    else:
-        pass
-
     return result
 
 def is_convex(f, *syms, domain=S.Reals):
@@ -688,9 +684,7 @@ def is_convex(f, *syms, domain=S.Reals):
     f = _sympify(f)
     var = syms[0]
     condition = f.diff(var, 2) < 0
-    if solve_univariate_inequality(condition, var, False, domain):
-        return False
-    return True
+    return not solve_univariate_inequality(condition, var, False, domain)
 
 
 def stationary_points(f, symbol, domain=S.Reals):
@@ -740,9 +734,7 @@ def stationary_points(f, symbol, domain=S.Reals):
         return S.EmptySet
 
     domain = continuous_domain(f, symbol, domain)
-    set = solveset(diff(f, symbol), symbol, domain)
-
-    return set
+    return solveset(diff(f, symbol), symbol, domain)
 
 
 def maximum(f, symbol, domain=S.Reals):

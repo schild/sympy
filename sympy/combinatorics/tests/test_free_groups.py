@@ -26,7 +26,7 @@ def test_free_group():
     assert a**0 not in F
     assert len(F) == 3
     assert str(F) == '<free group on the generators (x, y, z)>'
-    assert not F == G
+    assert F != G
     assert F.order() is oo
     assert F.is_abelian == False
     assert F.center() == {F.identity}
@@ -57,7 +57,7 @@ def test_FreeGroup__eq__():
 
 
 def test_FreeGroup__getitem__():
-    assert F[0:] == FreeGroup("x, y, z")
+    assert F[:] == FreeGroup("x, y, z")
     assert F[1:] == FreeGroup("y, z")
     assert F[2:] == FreeGroup("z")
 
@@ -160,7 +160,7 @@ def test_FreeGroupElm__len__():
 
 
 def test_FreeGroupElm_comparison():
-    assert not (x*y == y*x)
+    assert x*y != y*x
     assert x**0 == y**0
 
     assert x**2 < y**3

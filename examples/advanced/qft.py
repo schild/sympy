@@ -41,10 +41,7 @@ def u(p, r):
     if r not in [1, 2]:
         raise ValueError("Value of r should lie between 1 and 2")
     p1, p2, p3 = p
-    if r == 1:
-        ksi = Matrix([[1], [0]])
-    else:
-        ksi = Matrix([[0], [1]])
+    ksi = Matrix([[1], [0]]) if r == 1 else Matrix([[0], [1]])
     a = (sigma1*p1 + sigma2*p2 + sigma3*p3) / (E + m)*ksi
     if a == 0:
         a = zeros(2, 1)
@@ -57,10 +54,7 @@ def v(p, r):
     if r not in [1, 2]:
         raise ValueError("Value of r should lie between 1 and 2")
     p1, p2, p3 = p
-    if r == 1:
-        ksi = Matrix([[1], [0]])
-    else:
-        ksi = -Matrix([[0], [1]])
+    ksi = Matrix([[1], [0]]) if r == 1 else -Matrix([[0], [1]])
     a = (sigma1*p1 + sigma2*p2 + sigma3*p3) / (E + m)*ksi
     if a == 0:
         a = zeros(2, 1)

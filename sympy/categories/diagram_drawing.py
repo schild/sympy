@@ -312,15 +312,12 @@ class DiagramGrid:
         morphisms included in the dictionary.  Identities are dropped
         as well.
         """
-        newmorphisms = {}
-        for morphism, props in morphisms.items():
-            if isinstance(morphism, CompositeMorphism) and not props:
-                continue
-            elif isinstance(morphism, IdentityMorphism):
-                continue
-            else:
-                newmorphisms[morphism] = props
-        return newmorphisms
+        return {
+            morphism: props
+            for morphism, props in morphisms.items()
+            if (not isinstance(morphism, CompositeMorphism) or props)
+            and not isinstance(morphism, IdentityMorphism)
+        }
 
     @staticmethod
     def _merge_premises_conclusions(premises, conclusions):
@@ -606,12 +603,12 @@ class DiagramGrid:
                 # That cell is already occupied.
                 target_cell = (b[0], a[1])
 
-                if grid[target_cell]:
-                    # Degenerate situation, this edge is not
-                    # on the actual fringe.  Correct the
-                    # fringe and go on.
-                    fringe.remove((a, b))
-                    return True
+            if grid[target_cell]:
+                # Degenerate situation, this edge is not
+                # on the actual fringe.  Correct the
+                # fringe and go on.
+                fringe.remove((a, b))
+                return True
         elif a[0] == b[0]:
             # A horizontal edge.  We first attempt to build the
             # triangle in the downward direction.
@@ -630,11 +627,11 @@ class DiagramGrid:
                 target_cell = DiagramGrid._choose_target_cell(
                     up_left, up_right, (a, b), obj, skeleton, grid)
 
-                if not target_cell:
-                    # This edge is not in the fringe, remove it
-                    # and restart.
-                    fringe.remove((a, b))
-                    return True
+            if not target_cell:
+                # This edge is not in the fringe, remove it
+                # and restart.
+                fringe.remove((a, b))
+                return True
         elif a[1] == b[1]:
             # A vertical edge.  We will attempt to place the other
             # vertex of the triangle to the right of this edge.
@@ -652,11 +649,11 @@ class DiagramGrid:
                 target_cell = DiagramGrid._choose_target_cell(
                     left_up, left_down, (a, b), obj, skeleton, grid)
 
-                if not target_cell:
-                    # This edge is not in the fringe, remove it
-                    # and restart.
-                    fringe.remove((a, b))
-                    return True
+            if not target_cell:
+                # This edge is not in the fringe, remove it
+                # and restart.
+                fringe.remove((a, b))
+                return True
 
         # We now know where to place the other vertex of the
         # triangle.
@@ -884,11 +881,10 @@ class DiagramGrid:
             For the supplied group (or object, eventually), returns
             the size of the cell that will hold this group (object).
             """
-            if group in groups_grids:
-                grid = groups_grids[group]
-                return (grid.height, grid.width)
-            else:
+            if group not in groups_grids:
                 return (1, 1)
+            grid = groups_grids[group]
+            return (grid.height, grid.width)
 
         row_heights = [max(group_size(top_grid[i, j])[0]
                            for j in range(top_grid.width))
@@ -1028,18 +1024,15 @@ class DiagramGrid:
         returns the adjacency lists of the underlying undirected
         graph.
         """
-        adjlists = {}
-        for obj in objects:
-            adjlists[obj] = []
-
+        adjlists = {obj: [] for obj in objects}
         for morphism in merged_morphisms:
             adjlists[morphism.domain].append(morphism.codomain)
             adjlists[morphism.codomain].append(morphism.domain)
 
         # Assure that the objects in the adjacency list are always in
         # the same order.
-        for obj in adjlists.keys():
-            adjlists[obj].sort(key=default_sort_key)
+        for value in adjlists.values():
+            value.sort(key=default_sort_key)
 
         return adjlists
 
@@ -1107,8 +1100,7 @@ class DiagramGrid:
         Currently this removes "loop" morphisms: the non-identity
         morphisms with the same domains and codomains.
         """
-        morphisms = [m for m in merged_morphisms if m.domain != m.codomain]
-        return morphisms
+        return [m for m in merged_morphisms if m.domain != m.codomain]
 
     @staticmethod
     def _get_connected_components(objects, merged_morphisms):
@@ -1491,12 +1483,7 @@ class ArrowStringDescription:
         else:
             looping_str = ""
 
-        if self.arrow_style:
-
-            style_str = "@" + self.arrow_style
-        else:
-            style_str = ""
-
+        style_str = "@" + self.arrow_style if self.arrow_style else ""
         return "\\ar%s%s%s[%s%s]%s%s{%s}" % \
                (curving_str, looping_str, style_str, self.horizontal_direction,
                 self.vertical_direction, self.label_position,
@@ -1714,13 +1701,12 @@ class XypicDiagramDrawer:
                     else:
                         upper_quadrant = 3
                         lower_quadrant = 0
+                elif goes_out:
+                    upper_quadrant = 2
+                    lower_quadrant = 1
                 else:
-                    if goes_out:
-                        upper_quadrant = 2
-                        lower_quadrant = 1
-                    else:
-                        upper_quadrant = 1
-                        lower_quadrant = 2
+                    upper_quadrant = 1
+                    lower_quadrant = 2
 
                 if m_curving:
                     if m_curving == "^":
@@ -1732,7 +1718,7 @@ class XypicDiagramDrawer:
                     # quadrants.
                     quadrant[upper_quadrant] += 1
                     quadrant[lower_quadrant] += 1
-            elif d_j == 0:
+            else:
                 # Knowing where the other end of the morphism is
                 # and which way it goes, we now have to decide
                 # which quadrant is now the left one and which is
@@ -1744,13 +1730,12 @@ class XypicDiagramDrawer:
                     else:
                         left_quadrant = 0
                         right_quadrant = 1
+                elif goes_out:
+                    left_quadrant = 3
+                    right_quadrant = 2
                 else:
-                    if goes_out:
-                        left_quadrant = 3
-                        right_quadrant = 2
-                    else:
-                        left_quadrant = 2
-                        right_quadrant = 3
+                    left_quadrant = 2
+                    right_quadrant = 3
 
                 if m_curving:
                     if m_curving == "^":
@@ -1864,11 +1849,7 @@ class XypicDiagramDrawer:
                 (i2, j2) = object_coords[m.codomain]
 
                 m_str_info = morphisms_str_info[m]
-                if j1 < j2:
-                    m_str_info.label_position = "_"
-                else:
-                    m_str_info.label_position = "^"
-
+                m_str_info.label_position = "_" if j1 < j2 else "^"
                 # Don't allow any further modifications of the
                 # position of this label.
                 m_str_info.forced_label_position = True
@@ -1889,11 +1870,7 @@ class XypicDiagramDrawer:
                 (i2, j2) = object_coords[m.codomain]
 
                 m_str_info = morphisms_str_info[m]
-                if j1 < j2:
-                    m_str_info.label_position = "^"
-                else:
-                    m_str_info.label_position = "_"
-
+                m_str_info.label_position = "^" if j1 < j2 else "_"
                 # Don't allow any further modifications of the
                 # position of this label.
                 m_str_info.forced_label_position = True
@@ -1971,11 +1948,7 @@ class XypicDiagramDrawer:
                 (i2, j2) = object_coords[m.codomain]
 
                 m_str_info = morphisms_str_info[m]
-                if i1 < i2:
-                    m_str_info.label_position = "^"
-                else:
-                    m_str_info.label_position = "_"
-
+                m_str_info.label_position = "^" if i1 < i2 else "_"
                 # Don't allow any further modifications of the
                 # position of this label.
                 m_str_info.forced_label_position = True
@@ -1996,11 +1969,7 @@ class XypicDiagramDrawer:
                 (i2, j2) = object_coords[m.codomain]
 
                 m_str_info = morphisms_str_info[m]
-                if i1 < i2:
-                    m_str_info.label_position = "_"
-                else:
-                    m_str_info.label_position = "^"
-
+                m_str_info.label_position = "_" if i1 < i2 else "^"
                 # Don't allow any further modifications of the
                 # position of this label.
                 m_str_info.forced_label_position = True
@@ -2358,9 +2327,7 @@ class XypicDiagramDrawer:
         """
         # Build the mapping between objects and morphisms which have
         # them as domains.
-        object_morphisms = {}
-        for obj in diagram.objects:
-            object_morphisms[obj] = []
+        object_morphisms = {obj: [] for obj in diagram.objects}
         for morphism in morphisms:
             object_morphisms[morphism.domain].append(morphism)
 
@@ -2472,11 +2439,9 @@ class XypicDiagramDrawer:
         if not masked:
             morphisms_props = grid.morphisms
         else:
-            morphisms_props = {}
-            for m, props in grid.morphisms.items():
-                if m in masked:
-                    continue
-                morphisms_props[m] = props
+            morphisms_props = {
+                m: props for m, props in grid.morphisms.items() if m not in masked
+            }
 
         # Build the mapping between objects and their position in the
         # grid.

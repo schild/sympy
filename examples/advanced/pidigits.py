@@ -29,7 +29,7 @@ def display_fraction(digits, *, skip=0, colwidth=10, columns=5):
     if rem:
         buf = digits[-rem:]
         s = ""
-        for i in range(columns):
+        for _ in range(columns):
             s += buf[:colwidth].ljust(colwidth + 1, " ")
             buf = buf[colwidth:]
         print(s + ":", printed + colwidth*columns)
@@ -39,10 +39,7 @@ def calculateit(func, base, n, tofile):
     """Writes first n base-digits of a mpmath function to file"""
     prec = 100
     intpart = libmp.numeral(3, base)
-    if intpart == 0:
-        skip = 0
-    else:
-        skip = len(intpart)
+    skip = 0 if intpart == 0 else len(intpart)
     print("Step 1 of 2: calculating binary value...")
     prec = int(n*math.log(base, 2)) + 10
     t = perf_counter()

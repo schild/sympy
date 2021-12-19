@@ -86,8 +86,10 @@ if multi:
 dups = near_dups
 # some may have been real dups, so disregard those
 # for which all email addresses were the same
-multi = [k for k in dups if len(dups[k]) > 1 and
-    len(set([i for i, _ in dups[k]])) > 1]
+multi = [
+    k for k in dups if len(dups[k]) > 1 and len({i for i, _ in dups[k]}) > 1
+]
+
 if multi:
     # not fatal but make it red
     print()
@@ -191,10 +193,7 @@ for k in who:
     # so don't re-order the lines for a given address.
     # Other tidying up could be done but we won't do that here.
     def short_entry(line):
-        if line.count('<') == 2:
-            if line.split('>', 1)[1].split('<')[0].strip():
-                return False
-        return True
+        return line.count('<') != 2 or not line.split('>', 1)[1].split('<')[0].strip()
     if len(who[k]) == 1:
         line = who[k][0]
         if not line.strip():

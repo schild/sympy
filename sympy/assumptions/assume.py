@@ -163,12 +163,13 @@ class AppliedPredicate(Boolean):
             i = self.arguments[0]
             if i.is_Boolean or i.is_Symbol:
                 return i.binary_symbols
-        if self.function in (Q.eq, Q.ne):
-            if true in self.arguments or false in self.arguments:
-                if self.arguments[0].is_Symbol:
-                    return {self.arguments[0]}
-                elif self.arguments[1].is_Symbol:
-                    return {self.arguments[1]}
+        if self.function in (Q.eq, Q.ne) and (
+            true in self.arguments or false in self.arguments
+        ):
+            if self.arguments[0].is_Symbol:
+                return {self.arguments[0]}
+            elif self.arguments[1].is_Symbol:
+                return {self.arguments[1]}
         return set()
 
 
@@ -204,9 +205,7 @@ class PredicateMeta(ManagedProperties):
                 func = handler.funcs[sig]
                 if func.__doc__:
                     s = '    Inputs: <%s>' % str_signature(sig)
-                    lines = []
-                    for line in func.__doc__.splitlines():
-                        lines.append("    %s" % line)
+                    lines = ["    %s" % line for line in func.__doc__.splitlines()]
                     s += "\n".join(lines)
                     docs.append(s)
                 else:
@@ -306,8 +305,7 @@ class Predicate(Boolean, metaclass=PredicateMeta):
     def __new__(cls, *args, **kwargs):
         if cls is Predicate:
             return UndefinedPredicate(*args, **kwargs)
-        obj = super().__new__(cls, *args)
-        return obj
+        return super().__new__(cls, *args)
 
     @property
     def name(self):
@@ -445,10 +443,8 @@ class UndefinedPredicate(Predicate):
                     continue
                 if _res is None:
                     _res = res
-                else:
-                    # only check consistency if both resolutors have concluded
-                    if _res != res:
-                        raise ValueError('incompatible resolutors')
+                elif _res != res:
+                    raise ValueError('incompatible resolutors')
                 break
         return res
 

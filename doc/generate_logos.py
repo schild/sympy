@@ -9,6 +9,7 @@ Requirements:
     imagemagick     - for converting to *.ico favicon format
 """
 
+
 from argparse import ArgumentParser
 import xml.dom.minidom
 import os.path
@@ -22,16 +23,29 @@ default_source_svg = "sympy.svg"
 default_output_dir = os.path.join(os.path.dirname(__file__), "_build/logo")
 
 # those are the options for resizing versions without tail or text
-svg_sizes = {}
-svg_sizes['notail'] = {
-    "prefix":"notail", "dx":-70, "dy":-20, "size":690,
-    "title":"SymPy Logo, with no tail"}
-svg_sizes['notail-notext'] = {
-    "prefix":"notailtext", "dx":-70, "dy":60, "size":690,
-    "title":"SymPy Logo, with no tail, no text"}
-svg_sizes['notext'] = {
-    "prefix":"notext", "dx":-7, "dy":90, "size":750,
-    "title":"SymPy Logo, with no text"}
+svg_sizes = {
+    'notail': {
+        "prefix": "notail",
+        "dx": -70,
+        "dy": -20,
+        "size": 690,
+        "title": "SymPy Logo, with no tail",
+    },
+    'notail-notext': {
+        "prefix": "notailtext",
+        "dx": -70,
+        "dy": 60,
+        "size": 690,
+        "title": "SymPy Logo, with no tail, no text",
+    },
+    'notext': {
+        "prefix": "notext",
+        "dx": -7,
+        "dy": 90,
+        "size": 750,
+        "title": "SymPy Logo, with no text",
+    },
+}
 
 # The list of identifiers of various versions
 versions = ['notail', 'notail-notext', 'notext']
@@ -250,8 +264,7 @@ def get_svg_filename_from_versionkey(fn_source, ver):
         return basename
     name, ext = os.path.splitext(basename)
     prefix = svg_sizes[ver]["prefix"]
-    fn_out = "{}-{}.svg".format(name, prefix)
-    return fn_out
+    return "{}-{}.svg".format(name, prefix)
 
 def searchElementById(node, Id, tagname):
     """
@@ -266,8 +279,7 @@ def searchElementById(node, Id, tagname):
             return node
 
 def load_svg(fn):
-    doc = xml.dom.minidom.parse(fn)
-    return doc
+    return xml.dom.minidom.parse(fn)
 
 def save_svg(fn, doc):
     with open(fn, "wb") as f:

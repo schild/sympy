@@ -78,7 +78,7 @@ class BinaryRelation(Predicate):
     is_symmetric: Optional[bool] = None
 
     def __call__(self, *args):
-        if not len(args) == 2:
+        if len(args) != 2:
             raise ValueError("Binary relation takes two arguments, but got %s." % len(args))
         return AppliedBinaryRelation(self, *args)
 
@@ -167,7 +167,7 @@ class AppliedBinaryRelation(AppliedPredicate):
         revfunc = self.function.reversed
         if revfunc is None:
             return self
-        if not any(side.kind is BooleanKind for side in self.arguments):
+        if all(side.kind is not BooleanKind for side in self.arguments):
             return revfunc(-self.lhs, -self.rhs)
         return self
 

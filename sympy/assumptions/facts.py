@@ -55,7 +55,7 @@ def get_known_facts(x=None):
     if x is None:
         x = Symbol('x')
 
-    fact = And(
+    return And(
         # primitive predicates for extended real exclude each other.
         Exclusive(Q.negative_infinite(x), Q.negative(x), Q.zero(x),
             Q.positive(x), Q.positive_infinite(x)),
@@ -116,7 +116,6 @@ def get_known_facts(x=None):
         Implies(Q.integer_elements(x), Q.real_elements(x)),
         Implies(Q.real_elements(x), Q.complex_elements(x)),
     )
-    return fact
 
 
 def generate_known_facts_dict(keys, fact):
@@ -178,11 +177,7 @@ def get_known_facts_keys():
     ``generate_known_facts_dict``.
 
     """
-    exclude = set()
-    for pred in [Q.eq, Q.ne, Q.gt, Q.lt, Q.ge, Q.le]:
-        # exclude polyadic predicates
-        exclude.add(pred)
-
+    exclude = set([Q.eq, Q.ne, Q.gt, Q.lt, Q.ge, Q.le])
     result = []
     for attr in Q.__class__.__dict__:
         if attr.startswith('__'):

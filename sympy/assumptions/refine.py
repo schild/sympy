@@ -135,74 +135,71 @@ def refine_Pow(expr, assumptions):
     """
     from sympy.functions.elementary.complexes import Abs
     from sympy.functions import sign
-    if isinstance(expr.base, Abs):
-        if ask(Q.real(expr.base.args[0]), assumptions) and \
-                ask(Q.even(expr.exp), assumptions):
-            return expr.base.args[0] ** expr.exp
+    if (
+        isinstance(expr.base, Abs)
+        and ask(Q.real(expr.base.args[0]), assumptions)
+        and ask(Q.even(expr.exp), assumptions)
+    ):
+        return expr.base.args[0] ** expr.exp
     if ask(Q.real(expr.base), assumptions):
         if expr.base.is_number:
             if ask(Q.even(expr.exp), assumptions):
                 return abs(expr.base) ** expr.exp
             if ask(Q.odd(expr.exp), assumptions):
                 return sign(expr.base) * abs(expr.base) ** expr.exp
-        if isinstance(expr.exp, Rational):
-            if isinstance(expr.base, Pow):
-                return abs(expr.base.base) ** (expr.base.exp * expr.exp)
+        if isinstance(expr.exp, Rational) and isinstance(expr.base, Pow):
+            return abs(expr.base.base) ** (expr.base.exp * expr.exp)
 
-        if expr.base is S.NegativeOne:
-            if expr.exp.is_Add:
+        if expr.base is S.NegativeOne and expr.exp.is_Add:
 
-                old = expr
+            old = expr
 
-                # For powers of (-1) we can remove
-                #  - even terms
-                #  - pairs of odd terms
-                #  - a single odd term + 1
-                #  - A numerical constant N can be replaced with mod(N,2)
+            # For powers of (-1) we can remove
+            #  - even terms
+            #  - pairs of odd terms
+            #  - a single odd term + 1
+            #  - A numerical constant N can be replaced with mod(N,2)
 
-                coeff, terms = expr.exp.as_coeff_add()
-                terms = set(terms)
-                even_terms = set()
-                odd_terms = set()
-                initial_number_of_terms = len(terms)
+            coeff, terms = expr.exp.as_coeff_add()
+            terms = set(terms)
+            even_terms = set()
+            odd_terms = set()
+            initial_number_of_terms = len(terms)
 
-                for t in terms:
-                    if ask(Q.even(t), assumptions):
-                        even_terms.add(t)
-                    elif ask(Q.odd(t), assumptions):
-                        odd_terms.add(t)
+            for t in terms:
+                if ask(Q.even(t), assumptions):
+                    even_terms.add(t)
+                elif ask(Q.odd(t), assumptions):
+                    odd_terms.add(t)
 
-                terms -= even_terms
-                if len(odd_terms) % 2:
-                    terms -= odd_terms
-                    new_coeff = (coeff + S.One) % 2
-                else:
-                    terms -= odd_terms
-                    new_coeff = coeff % 2
+            terms -= even_terms
+            terms -= odd_terms
+            new_coeff = (coeff + S.One) % 2 if len(odd_terms) % 2 else coeff % 2
+            if new_coeff != coeff or len(terms) < initial_number_of_terms:
+                terms.add(new_coeff)
+                expr = expr.base**(Add(*terms))
 
-                if new_coeff != coeff or len(terms) < initial_number_of_terms:
-                    terms.add(new_coeff)
-                    expr = expr.base**(Add(*terms))
+            # Handle (-1)**((-1)**n/2 + m/2)
+            e2 = 2*expr.exp
+            if ask(Q.even(e2), assumptions) and e2.could_extract_minus_sign():
+                e2 *= expr.base
+            if e2.is_Add:
+                i, p = e2.as_two_terms()
+                if (
+                    p.is_Pow
+                    and p.base is S.NegativeOne
+                    and ask(Q.integer(p.exp), assumptions)
+                ):
+                    i = (i + 1)/2
+                    if ask(Q.even(i), assumptions):
+                        return expr.base**p.exp
+                    elif ask(Q.odd(i), assumptions):
+                        return expr.base**(p.exp + 1)
+                    else:
+                        return expr.base**(p.exp + i)
 
-                # Handle (-1)**((-1)**n/2 + m/2)
-                e2 = 2*expr.exp
-                if ask(Q.even(e2), assumptions):
-                    if e2.could_extract_minus_sign():
-                        e2 *= expr.base
-                if e2.is_Add:
-                    i, p = e2.as_two_terms()
-                    if p.is_Pow and p.base is S.NegativeOne:
-                        if ask(Q.integer(p.exp), assumptions):
-                            i = (i + 1)/2
-                            if ask(Q.even(i), assumptions):
-                                return expr.base**p.exp
-                            elif ask(Q.odd(i), assumptions):
-                                return expr.base**(p.exp + 1)
-                            else:
-                                return expr.base**(p.exp + i)
-
-                if old != expr:
-                    return expr
+            if old != expr:
+                return expr
 
 
 def refine_atan2(expr, assumptions):

@@ -570,9 +570,8 @@ class Polyhedron(Basic):
         if not isinstance(perm, Perm):
             perm = self.pgroup[perm]
             # and we know it's valid
-        else:
-            if perm.size != self.size:
-                raise ValueError('Polyhedron and Permutation sizes differ.')
+        elif perm.size != self.size:
+            raise ValueError('Polyhedron and Permutation sizes differ.')
         a = perm.array_form
         corners = [self.corners[a[i]] for i in range(len(self.corners))]
         self._corners = tuple(corners)
@@ -687,7 +686,7 @@ def _pgroup_calcs():
                         range(len(ordered_faces))))
         flat_faces = flatten(ordered_faces)
         new_pgroup = []
-        for i, p in enumerate(pgroup):
+        for p in pgroup:
             h = polyh.copy()
             h.rotate(p)
             c = h.corners
@@ -1008,12 +1007,12 @@ icosahedron = Polyhedron(
         Perm(0, 8, 10)(1, 7, 6)(2, 11, 5)(3, 9, 4),
         Perm(0, 9, 6)(1, 3, 11)(2, 8, 7)(4, 10, 5)))
 
-tetrahedron_faces = list(tuple(arg) for arg in tetrahedron.faces)
+tetrahedron_faces = [tuple(arg) for arg in tetrahedron.faces]
 
-cube_faces = list(tuple(arg) for arg in cube.faces)
+cube_faces = [tuple(arg) for arg in cube.faces]
 
-octahedron_faces = list(tuple(arg) for arg in octahedron.faces)
+octahedron_faces = [tuple(arg) for arg in octahedron.faces]
 
-dodecahedron_faces = list(tuple(arg) for arg in dodecahedron.faces)
+dodecahedron_faces = [tuple(arg) for arg in dodecahedron.faces]
 
-icosahedron_faces = list(tuple(arg) for arg in icosahedron.faces)
+icosahedron_faces = [tuple(arg) for arg in icosahedron.faces]

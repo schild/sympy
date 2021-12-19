@@ -105,7 +105,7 @@ def _check_cycles_alt_sym(perm):
             current_len = 1
             used.add(i)
             j = i
-            while af[j] != i:
+            while af[j] != j:
                 current_len += 1
                 j = af[j]
                 used.add(j)
@@ -238,12 +238,11 @@ def _handle_precomputed_bsgs(base, strong_gens, transversals=None,
             transversals = \
                 _orbits_transversals_from_bsgs(base, strong_gens_distr,
                                            transversals_only=True)
-    else:
-        if basic_orbits is None:
-            base_len = len(base)
-            basic_orbits = [None]*base_len
-            for i in range(base_len):
-                basic_orbits[i] = list(transversals[i].keys())
+    elif basic_orbits is None:
+        base_len = len(base)
+        basic_orbits = [None]*base_len
+        for i in range(base_len):
+            basic_orbits[i] = list(transversals[i].keys())
     return transversals, basic_orbits, strong_gens_distr
 
 
@@ -306,10 +305,9 @@ def _orbits_transversals_from_bsgs(base, strong_gens_distr,
             basic_orbits[i] = list(transversals[i].keys())
     if transversals_only:
         return transversals
-    else:
-        if not slp:
-            return basic_orbits, transversals
-        return basic_orbits, transversals, slps
+    if not slp:
+        return basic_orbits, transversals
+    return basic_orbits, transversals, slps
 
 
 def _remove_gens(base, strong_gens, basic_orbits=None, strong_gens_distr=None):
@@ -529,9 +527,8 @@ def _strong_gens_from_distr(strong_gens_distr):
     """
     if len(strong_gens_distr) == 1:
         return strong_gens_distr[0][:]
-    else:
-        result = strong_gens_distr[0]
-        for gen in strong_gens_distr[1]:
-            if gen not in result:
-                result.append(gen)
-        return result
+    result = strong_gens_distr[0]
+    for gen in strong_gens_distr[1]:
+        if gen not in result:
+            result.append(gen)
+    return result

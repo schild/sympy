@@ -73,8 +73,7 @@ class Literal:
         return self.arg == other.arg and self.is_Not == other.is_Not
 
     def __hash__(self):
-        h = hash((type(self).__name__, self.arg, self.is_Not))
-        return h
+        return hash((type(self).__name__, self.arg, self.is_Not))
 
 
 class OR:
@@ -103,8 +102,7 @@ class OR:
         return self.args == other.args
 
     def __str__(self):
-        s = '(' + ' | '.join([str(arg) for arg in self.args]) + ')'
-        return s
+        return '(' + ' | '.join([str(arg) for arg in self.args]) + ')'
 
     __repr__ = __str__
 
@@ -135,8 +133,7 @@ class AND:
         return self.args == other.args
 
     def __str__(self):
-        s = '('+' & '.join([str(arg) for arg in self.args])+')'
-        return s
+        return '('+' & '.join([str(arg) for arg in self.args])+')'
 
     __repr__ = __str__
 
@@ -174,7 +171,7 @@ def to_NNF(expr, composite_map=None):
     from sympy.assumptions.assume import AppliedPredicate, Predicate
 
     if composite_map is None:
-        composite_map = dict()
+        composite_map = {}
 
 
     binrelpreds = {Eq: Q.eq, Ne: Q.ne, Gt: Q.gt, Lt: Q.lt, Ge: Q.ge, Le: Q.le}
@@ -258,8 +255,7 @@ def distribute_AND_over_OR(expr):
     as a CNF object.
     """
     if not isinstance(expr, (AND, OR)):
-        tmp = set()
-        tmp.add(frozenset((expr,)))
+        tmp = {frozenset((expr,))}
         return CNF(tmp)
 
     if isinstance(expr, OR):
@@ -299,11 +295,10 @@ class CNF:
         self.add_clauses(clauses)
 
     def __str__(self):
-        s = ' & '.join(
+        return ' & '.join(
             ['(' + ' | '.join([str(lit) for lit in clause]) +')'
             for clause in self.clauses]
         )
-        return s
 
     def extend(self, props):
         for p in props:
@@ -347,20 +342,16 @@ class CNF:
 
     def _not(self):
         clss = list(self.clauses)
-        ll = set()
-        for x in clss[-1]:
-            ll.add(frozenset((~x,)))
+        ll = {frozenset((~x,)) for x in clss[-1]}
         ll = CNF(ll)
 
         for rest in clss[:-1]:
-            p = set()
-            for x in rest:
-                p.add(frozenset((~x,)))
+            p = {frozenset((~x,)) for x in rest}
             ll = ll._or(CNF(p))
         return ll
 
     def rcall(self, expr):
-        clause_list = list()
+        clause_list = []
         for clause in self.clauses:
             lits = [arg.rcall(expr) for arg in clause]
             clause_list.append(OR(*lits))
@@ -406,8 +397,8 @@ class EncodedCNF:
     """
     def __init__(self, data=None, encoding=None):
         if not data and not encoding:
-            data = list()
-            encoding = dict()
+            data = []
+            encoding = {}
         self.data = data
         self.encoding = encoding
         self._symbols = list(encoding.keys())
@@ -451,4 +442,4 @@ class EncodedCNF:
             return value
 
     def encode(self, clause):
-        return {self.encode_arg(arg) if not arg.lit == S.false else 0 for arg in clause}
+        return {self.encode_arg(arg) if arg.lit != S.false else 0 for arg in clause}

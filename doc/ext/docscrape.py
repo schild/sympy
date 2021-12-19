@@ -22,11 +22,7 @@ class Reader:
            String with lines separated by '\n'.
 
         """
-        if isinstance(data, list):
-            self._str = data
-        else:
-            self._str = data.split('\n')  # store string as list of lines
-
+        self._str = data if isinstance(data, list) else data.split('\n')
         self.reset()
 
     def __getitem__(self, n):
@@ -36,12 +32,11 @@ class Reader:
         self._l = 0  # current line nr
 
     def read(self):
-        if not self.eof():
-            out = self[self._l]
-            self._l += 1
-            return out
-        else:
+        if self.eof():
             return ''
+        out = self[self._l]
+        self._l += 1
+        return out
 
     def seek_next_non_empty_line(self):
         for l in self[self._l:]:
@@ -184,10 +179,9 @@ class NumpyDocString(Mapping):
         params = []
         while not r.eof():
             header = r.read().strip()
-            if ' : ' in header:
-                arg_name, arg_type = header.split(' : ')[:2]
-            else:
-                arg_name, arg_type = header, ''
+            arg_name, arg_type = (
+                header.split(' : ')[:2] if ' : ' in header else (header, '')
+            )
 
             desc = r.read_to_next_unindented_line()
             desc = dedent_lines(desc)
@@ -332,10 +326,7 @@ class NumpyDocString(Mapping):
         return [name, len(name)*symbol]
 
     def _str_indent(self, doc, indent=4):
-        out = []
-        for line in doc:
-            out += [' '*indent + line]
-        return out
+        return [' '*indent + line for line in doc]
 
     def _str_signature(self):
         if self['Signature']:
@@ -360,10 +351,7 @@ class NumpyDocString(Mapping):
         if self[name]:
             out += self._str_header(name)
             for param, param_type, desc in self[name]:
-                if param_type:
-                    out += ['{} : {}'.format(param, param_type)]
-                else:
-                    out += [param]
+                out += ['{} : {}'.format(param, param_type)] if param_type else [param]
                 out += self._str_indent(desc)
             out += ['']
         return out

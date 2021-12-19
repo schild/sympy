@@ -124,7 +124,7 @@ class CosetTable(DefaultPrinting):
         `\alpha \in \Omega` and `x \in A`.
 
         """
-        return not any(None in self.table[coset] for coset in self.omega)
+        return all(None not in self.table[coset] for coset in self.omega)
 
     # Pg. 153 [1]
     def define(self, alpha, x, modified=False):
@@ -262,7 +262,7 @@ class CosetTable(DefaultPrinting):
         # behaves as a queue
         q = []
         self.merge(alpha, beta, q)
-        while len(q) > 0:
+        while q:
             gamma = q.pop(0)
             for x in A_dict:
                 delta = table[gamma][A_dict[x]]
@@ -562,7 +562,7 @@ class CosetTable(DefaultPrinting):
             self.modified_merge(alpha, beta, w, q)
         else:
             self.merge(alpha, beta, q)
-        while len(q) > 0:
+        while q:
             gamma = q.pop(0)
             for x in A_dict:
                 delta = table[gamma][A_dict[x]]
@@ -808,7 +808,7 @@ class CosetTable(DefaultPrinting):
         A_dict = self.A_dict
         A_dict_inv = self.A_dict_inv
         table = self.table
-        chi = tuple([i for i in range(len(self.p)) if self.p[i] != i])
+        chi = tuple(i for i in range(len(self.p)) if self.p[i] != i)
         for alpha in self.omega:
             gamma += 1
             if gamma != alpha:
@@ -1131,7 +1131,7 @@ def coset_enumeration_r(fp_grp, Y, max_cosets=None, draft=None,
     R = fp_grp.relators
     A_dict = C.A_dict
     p = C.p
-    for i in range(0, len(Y)):
+    for i in range(len(Y)):
         if modified:
             _scan_and_fill(0, Y[i], C._grp.generators[i])
         else:

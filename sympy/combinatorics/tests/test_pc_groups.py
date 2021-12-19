@@ -24,10 +24,7 @@ def test_pc_presentation():
 
         pcgs = PcGroup.pcgs
         free_group = collector.free_group
-        free_to_perm = {}
-        for s, g in zip(free_group.symbols, pcgs):
-            free_to_perm[s] = g
-
+        free_to_perm = dict(zip(free_group.symbols, pcgs))
         for k, v in pc_presentation.items():
             k_array = k.array_form
             if v != ():
@@ -79,9 +76,7 @@ def test_induced_pcgs():
     for g in G:
         PcGroup = g.polycyclic_group()
         collector = PcGroup.collector
-        gens = [gen for gen in g.generators]
+        gens = list(g.generators)
         ipcgs = collector.induced_pcgs(gens)
-        m = []
-        for i in ipcgs:
-            m.append(collector.exponent_vector(i))
+        m = [collector.exponent_vector(i) for i in ipcgs]
         assert Matrix(m).is_upper

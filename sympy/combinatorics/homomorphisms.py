@@ -52,10 +52,7 @@ class GroupHomomorphism:
             else:
                 parts = g
             for s in parts:
-                if s in inverses:
-                    w = w*inverses[s]
-                else:
-                    w = w*inverses[s**-1]**-1
+                w = w*inverses[s] if s in inverses else w*inverses[s**-1]**-1
             inverses[g] = w
 
         return inverses
@@ -162,25 +159,18 @@ class GroupHomomorphism:
             raise ValueError("The supplied element doesn't belong to the domain")
         if elem.is_identity:
             return self.codomain.identity
+        images = self.images
+        value = self.codomain.identity
+        if isinstance(self.domain, PermutationGroup):
+            gens = self.domain.generator_product(elem, original=True)
+            for g in gens:
+                value = images[g]*value if g in self.images else images[g**-1]**-1*value
         else:
-            images = self.images
-            value = self.codomain.identity
-            if isinstance(self.domain, PermutationGroup):
-                gens = self.domain.generator_product(elem, original=True)
-                for g in gens:
-                    if g in self.images:
-                        value = images[g]*value
-                    else:
-                        value = images[g**-1]**-1*value
-            else:
-                i = 0
-                for _, p in elem.array_form:
-                    if p < 0:
-                        g = elem[i]**-1
-                    else:
-                        g = elem[i]
-                    value = value*images[g]**p
-                    i += abs(p)
+            i = 0
+            for _, p in elem.array_form:
+                g = elem[i]**-1 if p < 0 else elem[i]
+                value = value*images[g]**p
+                i += abs(p)
         return value
 
     def __call__(self, elem):
@@ -290,7 +280,7 @@ def homomorphism(domain, codomain, gens, images=(), check=True):
     generators = domain.generators
     if not all(g in generators for g in gens):
         raise ValueError("The supplied generators must be a subset of the domain's generators")
-    if not all(g in codomain for g in images):
+    if any(g not in codomain for g in images):
         raise ValueError("The images must be elements of the codomain")
 
     if images and len(images) != len(gens):
@@ -318,32 +308,31 @@ def _check_homomorphism(domain, codomain, images):
     def _image(r):
         if r.is_identity:
             return identity
-        else:
-            w = identity
-            r_arr = r.array_form
-            i = 0
-            j = 0
-            # i is the index for r and j is for
-            # r_arr. r_arr[j] is the tuple (sym, p)
-            # where sym is the generator symbol
-            # and p is the power to which it is
-            # raised while r[i] is a generator
-            # (not just its symbol) or the inverse of
-            # a generator - hence the need for
-            # both indices
-            while i < len(r):
-                power = r_arr[j][1]
-                if isinstance(domain, PermutationGroup) and r[i] in gens:
-                    s = domain.generators[gens.index(r[i])]
-                else:
-                    s = r[i]
-                if s in images:
-                    w = w*images[s]**power
-                elif s**-1 in images:
-                    w = w*images[s**-1]**power
-                i += abs(power)
-                j += 1
-            return w
+        w = identity
+        r_arr = r.array_form
+        i = 0
+        j = 0
+        # i is the index for r and j is for
+        # r_arr. r_arr[j] is the tuple (sym, p)
+        # where sym is the generator symbol
+        # and p is the power to which it is
+        # raised while r[i] is a generator
+        # (not just its symbol) or the inverse of
+        # a generator - hence the need for
+        # both indices
+        while i < len(r):
+            power = r_arr[j][1]
+            if isinstance(domain, PermutationGroup) and r[i] in gens:
+                s = domain.generators[gens.index(r[i])]
+            else:
+                s = r[i]
+            if s in images:
+                w = w*images[s]**power
+            elif s**-1 in images:
+                w = w*images[s**-1]**power
+            i += abs(power)
+            j += 1
+        return w
 
     for r in rels:
         if isinstance(codomain, FpGroup):
@@ -420,8 +409,7 @@ def block_homomorphism(group, blocks):
     # the list corresponding to the identity permutation in codomain
     identity = range(m)
     images = {g: Permutation([b[p[i]^g] for i in identity]) for g in group.generators}
-    H = GroupHomomorphism(group, codomain, images)
-    return H
+    return GroupHomomorphism(group, codomain, images)
 
 def group_isomorphism(G, H, isomorphism=True):
     '''

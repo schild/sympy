@@ -17,7 +17,7 @@ def demo_vgate_app(v):
 
 
 def black_box(qubits):
-    return True if qubits == IntQubit(1, nqubits=qubits.nqubits) else False
+    return qubits == IntQubit(1, nqubits=qubits.nqubits)
 
 
 def main():

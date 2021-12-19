@@ -80,16 +80,12 @@ def euler_equations(L, funcs=(), vars=()):
 
     vars = tuple(vars) if iterable(vars) else (vars,)
 
-    if not vars:
-        vars = funcs[0].args
-    else:
-        vars = tuple(sympify(var) for var in vars)
-
+    vars = funcs[0].args if not vars else tuple(sympify(var) for var in vars)
     if not all(isinstance(v, Symbol) for v in vars):
         raise TypeError('Variables are not symbols, got %s' % vars)
 
     for f in funcs:
-        if not vars == f.args:
+        if vars != f.args:
             raise ValueError("Variables %s do not match args: %s" % (vars, f))
 
     order = max([len(d.variables) for d in L.atoms(Derivative)

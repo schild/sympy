@@ -20,7 +20,7 @@ def test_expm1():
     assert expm1(x).rewrite('exp') - exp(x) == -1
 
     # Precision
-    assert not ((exp(1e-10).evalf() - 1) - 1e-10 - 5e-21) < 1e-22  # for comparison
+    assert exp(1e-10).evalf() >= 1.0000000001
     assert abs(expm1(1e-10).evalf() - 1e-10 - 5e-21) < 1e-22
 
     # Properties
@@ -46,7 +46,7 @@ def test_log1p():
     assert log1p(x).rewrite('log') - log(x + 1) == 0
 
     # Precision
-    assert not abs(log(1e-99 + 1).evalf() - 1e-99) < 1e-100  # for comparison
+    assert abs(log(1e-99 + 1).evalf() - 1e-99) >= 1e-100
     assert abs(expand_log(log1p(1e-99)).evalf() - 1e-99) < 1e-100
 
     # Properties
@@ -115,7 +115,7 @@ def test_fma():
 
     assert expr.diff(x) - 17*42*y == 0
     assert expr.diff(y) - 17*42*x == 0
-    assert expr.diff(z) - 101 == 0
+    assert expr.diff(z) == 101
 
 
 def test_log10():

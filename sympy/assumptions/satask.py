@@ -91,17 +91,16 @@ def check_satisfiability(prop, _prop, factbase):
     if can_be_true and can_be_false:
         return None
 
-    if can_be_true and not can_be_false:
+    if can_be_true:
         return True
 
-    if not can_be_true and can_be_false:
+    if can_be_false:
         return False
 
-    if not can_be_true and not can_be_false:
-        # TODO: Run additional checks to see which combination of the
-        # assumptions, global_assumptions, and relevant_facts are
-        # inconsistent.
-        raise ValueError("Inconsistent assumptions")
+    # TODO: Run additional checks to see which combination of the
+    # assumptions, global_assumptions, and relevant_facts are
+    # inconsistent.
+    raise ValueError("Inconsistent assumptions")
 
 
 def extract_predargs(proposition, assumptions=None, context=None):

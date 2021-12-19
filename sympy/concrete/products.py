@@ -196,8 +196,7 @@ class Product(ExprWithIntLimits):
     limits: tTuple[tTuple[Symbol, Expr, Expr]]
 
     def __new__(cls, function, *symbols, **assumptions):
-        obj = ExprWithIntLimits.__new__(cls, function, *symbols, **assumptions)
-        return obj
+        return ExprWithIntLimits.__new__(cls, function, *symbols, **assumptions)
 
     def _eval_rewrite_as_Sum(self, *args, **kwargs):
         return exp(Sum(log(self.function), *self.limits))
@@ -262,7 +261,7 @@ class Product(ExprWithIntLimits):
             undo = {v: k for k, v in reps.items()}
             did = self.xreplace(reps).doit(**hints)
             if isinstance(did, tuple):  # when separate=True
-                did = tuple([i.xreplace(undo) for i in did])
+                did = tuple(i.xreplace(undo) for i in did)
             else:
                 did = did.xreplace(undo)
             return did
@@ -356,11 +355,10 @@ class Product(ExprWithIntLimits):
 
                 if not exclude:
                     return None
-                else:
-                    arg = term._new_rawargs(*include)
-                    A = Mul(*exclude)
-                    B = self.func(arg, (k, a, n)).doit()
-                    return without_k**(n - a + 1)*A * B
+                arg = term._new_rawargs(*include)
+                A = Mul(*exclude)
+                B = self.func(arg, (k, a, n)).doit()
+                return without_k**(n - a + 1)*A * B
             else:
                 # Just a single term
                 p = self._eval_product(with_k[0], (k, a, n))
@@ -415,8 +413,12 @@ class Product(ExprWithIntLimits):
         if x in a.free_symbols or x in b.free_symbols:
             return None
         h = Dummy()
-        rv = Sum( Product(f, (i, a, h - 1)) * Product(f, (i, h + 1, b)) * Derivative(f, x, evaluate=True).subs(i, h), (h, a, b))
-        return rv
+        return Sum(
+            Product(f, (i, a, h - 1))
+            * Product(f, (i, h + 1, b))
+            * Derivative(f, x, evaluate=True).subs(i, h),
+            (h, a, b),
+        )
 
     def is_convergent(self):
         r"""

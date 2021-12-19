@@ -64,14 +64,16 @@ def _common_new(cls, function, *symbols, discrete, **assumptions):
         limits = list(function.limits) + limits
         function = function.function
 
+    symbols_of_integration = {i[0] for i in limits}
     # Any embedded piecewise functions need to be brought out to the
     # top level. We only fold Piecewise that contain the integration
     # variable.
-    reps = {}
-    symbols_of_integration = {i[0] for i in limits}
-    for p in function.atoms(Piecewise):
-        if not p.has(*symbols_of_integration):
-            reps[p] = Dummy()
+    reps = {
+        p: Dummy()
+        for p in function.atoms(Piecewise)
+        if not p.has(*symbols_of_integration)
+    }
+
     # mask off those that don't
     function = function.xreplace(reps)
     # do the fold
@@ -130,11 +132,10 @@ def _process_limits(*symbols, discrete=None):
                     dx = abs(V[1].step)  # direction doesn't matter
                     if dx == 1:
                         V[1:] = [lo, hi]
+                    elif lo is not S.NegativeInfinity:
+                        V = [V[0]] + [0, (hi - lo)//dx, dx*V[0] + lo]
                     else:
-                        if lo is not S.NegativeInfinity:
-                            V = [V[0]] + [0, (hi - lo)//dx, dx*V[0] + lo]
-                        else:
-                            V = [V[0]] + [0, S.Infinity, -dx*V[0] + hi]
+                        V = [V[0]] + [0, S.Infinity, -dx*V[0] + hi]
                 else:
                     # more complicated sets would require splitting, e.g.
                     # Union(Interval(1, 3), interval(6,10))
@@ -330,7 +331,7 @@ class ExprWithLimits(Expr):
             for i in xab[1:]:
                 isyms.update(i.free_symbols)
         reps = {v: k for k, v in reps.items()}
-        return set([reps.get(_, _) for _ in isyms])
+        return {reps.get(_, _) for _ in isyms}
 
     @property
     def is_number(self):
@@ -386,11 +387,8 @@ class ExprWithLimits(Expr):
                 old.free_symbols.intersection(self.free_symbols):
             sub_into_func = True
             for i, xab in enumerate(limits):
-                if 1 == len(xab) and old == xab[0]:
-                    if new._diff_wrt:
-                        xab = (new,)
-                    else:
-                        xab = (old, old)
+                if len(xab) == 1 and old == xab[0]:
+                    xab = (new, ) if new._diff_wrt else (old, old)
                 limits[i] = Tuple(xab[0], *[l._subs(old, new) for l in xab[1:]])
                 if len(xab[0].free_symbols.intersection(old.free_symbols)) != 0:
                     sub_into_func = False
@@ -464,9 +462,8 @@ class ExprWithLimits(Expr):
                     # Maybe there are assumptions on the variable?
                     if lim[0].is_infinite is None:
                         ret_None = True
-            else:
-                if lim[0].is_infinite is None:
-                    ret_None = True
+            elif lim[0].is_infinite is None:
+                ret_None = True
 
         if ret_None:
             return None
@@ -511,17 +508,16 @@ class ExprWithLimits(Expr):
         """
         ret_None = False
         for lim in self.limits:
-            if len(lim) == 3:
-                var, a, b = lim
-                dif = b - a
-                if dif.is_extended_negative:
-                    return True
-                elif dif.is_extended_nonnegative:
-                    continue
-                else:
-                    ret_None = True
-            else:
+            if len(lim) != 3:
                 return None
+            var, a, b = lim
+            dif = b - a
+            if dif.is_extended_negative:
+                return True
+            elif dif.is_extended_nonnegative:
+                continue
+            else:
+                ret_None = True
         if ret_None:
             return None
         return False
@@ -565,7 +561,7 @@ class AddWithLimits(ExprWithLimits):
         return None
 
     def _eval_factor(self, **hints):
-        if 1 == len(self.limits):
+        if len(self.limits) == 1:
             summand = self.function.factor(**hints)
             if summand.is_Mul:
                 out = sift(summand.args, lambda w: w.is_commutative \
@@ -573,7 +569,7 @@ class AddWithLimits(ExprWithLimits):
                 return Mul(*out[True])*self.func(Mul(*out[False]), \
                     *self.limits)
         else:
-            summand = self.func(self.function, *self.limits[0:-1]).factor()
+            summand = self.func(self.function, *self.limits[:-1]).factor()
             if not summand.has(self.variables[-1]):
                 return self.func(1, [self.limits[-1]]).doit()*summand
             elif isinstance(summand, Mul):

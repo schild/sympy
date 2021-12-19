@@ -132,9 +132,11 @@ def test_coset_enumeration():
     F, x, y = free_group("x, y")
     f = FpGroup(F, [x**3, y**3, x**-1*y**-1*x*y])
     C_r = coset_enumeration_r(f, [x])
-    C_r.compress(); C_r.standardize()
+    C_r.compress()
+    C_r.standardize()
     C_c = coset_enumeration_c(f, [x])
-    C_c.compress(); C_c.standardize()
+    C_c.compress()
+    C_c.standardize()
     table1 = [[0, 0, 1, 2], [1, 1, 2, 0], [2, 2, 0, 1]]
     assert C_r.table == table1
     assert C_c.table == table1
@@ -155,9 +157,11 @@ def test_coset_enumeration():
     F, a, b = free_group("a, b")
     Cox = FpGroup(F, [a**6, b**6, (a*b)**2, (a**2*b**2)**2, (a**3*b**3)**5])
     C_r = coset_enumeration_r(Cox, [a])
-    C_r.compress(); C_r.standardize()
+    C_r.compress()
+    C_r.standardize()
     C_c = coset_enumeration_c(Cox, [a])
-    C_c.compress(); C_c.standardize()
+    C_c.compress()
+    C_c.standardize()
     table3 = [[0, 0, 1, 2],
              [2, 3, 4, 0],
              [5, 1, 0, 6],
@@ -668,24 +672,20 @@ def test_coset_enumeration():
             (a*b**2)**4, (a**2*b**2)**4, (a**-1*b*a*b)**4, (a*b**-1*a*b)**4])
     C_r = coset_enumeration_r(B_2_4, [a])
     C_c = coset_enumeration_c(B_2_4, [a])
-    index_r = 0
-    for i in range(len(C_r.p)):
-        if C_r.p[i] == i:
-            index_r += 1
+    index_r = sum(C_r.p[i] == i for i in range(len(C_r.p)))
     assert index_r == 1024
 
-    index_c = 0
-    for i in range(len(C_c.p)):
-        if C_c.p[i] == i:
-            index_c += 1
+    index_c = sum(C_c.p[i] == i for i in range(len(C_c.p)))
     assert index_c == 1024
 
     # trivial Macdonald group G(2,2) from [2] Pg. 480
     M = FpGroup(F, [b**-1*a**-1*b*a*b**-1*a*b*a**-2, a**-1*b**-1*a*b*a**-1*b*a*b**-2])
     C_r = coset_enumeration_r(M, [a])
-    C_r.compress(); C_r.standardize()
+    C_r.compress()
+    C_r.standardize()
     C_c = coset_enumeration_c(M, [a])
-    C_c.compress(); C_c.standardize()
+    C_c.compress()
+    C_c.standardize()
     table4 = [[0, 0, 0, 0]]
     assert C_r.table == table4
     assert C_c.table == table4

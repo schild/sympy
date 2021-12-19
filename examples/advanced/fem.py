@@ -34,12 +34,9 @@ class ReferenceSimplex:
         coords = self.coords
         nsd = self.nsd
 
-        limit = 1
-        for p in coords:
-            limit -= p
-
+        limit = 1 - sum(coords)
         intf = f
-        for d in range(0, nsd):
+        for d in range(nsd):
             p = coords[d]
             limit += p
             intf = integrate(intf, (p, 0, limit))
@@ -55,8 +52,8 @@ def bernstein_space(order, nsd):
 
     if nsd == 1:
         b1, b2 = x, 1 - x
-        for o1 in range(0, order + 1):
-            for o2 in range(0, order + 1):
+        for o1 in range(order + 1):
+            for o2 in range(order + 1):
                 if o1 + o2 == order:
                     aij = Symbol("a_%d_%d" % (o1, o2))
                     sum += aij*binomial(order, o1)*pow(b1, o1)*pow(b2, o2)
@@ -65,9 +62,9 @@ def bernstein_space(order, nsd):
 
     if nsd == 2:
         b1, b2, b3 = x, y, 1 - x - y
-        for o1 in range(0, order + 1):
-            for o2 in range(0, order + 1):
-                for o3 in range(0, order + 1):
+        for o1 in range(order + 1):
+            for o2 in range(order + 1):
+                for o3 in range(order + 1):
                     if o1 + o2 + o3 == order:
                         aij = Symbol("a_%d_%d_%d" % (o1, o2, o3))
                         fac = factorial(order) / (factorial(o1)*factorial(o2)*factorial(o3))
@@ -77,10 +74,10 @@ def bernstein_space(order, nsd):
 
     if nsd == 3:
         b1, b2, b3, b4 = x, y, z, 1 - x - y - z
-        for o1 in range(0, order + 1):
-            for o2 in range(0, order + 1):
-                for o3 in range(0, order + 1):
-                    for o4 in range(0, order + 1):
+        for o1 in range(order + 1):
+            for o2 in range(order + 1):
+                for o3 in range(order + 1):
+                    for o4 in range(order + 1):
                         if o1 + o2 + o3 + o4 == order:
                             aij = Symbol("a_%d_%d_%d_%d" % (o1, o2, o3, o4))
                             fac = factorial(order)/(factorial(o1)*factorial(o2)*factorial(o3)*factorial(o4))
@@ -102,19 +99,19 @@ def create_point_set(order, nsd):
                 set.append((x, y))
 
     if nsd == 2:
-        for i in range(0, order + 1):
+        for i in range(order + 1):
             x = i*h
-            for j in range(0, order + 1):
+            for j in range(order + 1):
                 y = j*h
                 if x + y <= 1:
                     set.append((x, y))
 
     if nsd == 3:
-        for i in range(0, order + 1):
+        for i in range(order + 1):
             x = i*h
-            for j in range(0, order + 1):
+            for j in range(order + 1):
                 y = j*h
-                for k in range(0, order + 1):
+                for k in range(order + 1):
                     z = k*h
                     if x + y + z <= 1:
                         set.append((x, y, z))
@@ -126,9 +123,9 @@ def create_matrix(equations, coeffs):
     A = zeros(len(equations))
     i = 0
     j = 0
-    for j in range(0, len(coeffs)):
+    for j in range(len(coeffs)):
         c = coeffs[j]
-        for i in range(0, len(equations)):
+        for i in range(len(equations)):
             e = equations[i]
             d, _ = reduced(e, [c])
             A[i, j] = d[0]
@@ -167,9 +164,9 @@ class Lagrange:
 
         xx = Ainv*b
 
-        for i in range(0, len(equations)):
+        for i in range(len(equations)):
             Ni = pol
-            for j in range(0, len(coeffs)):
+            for j in range(len(coeffs)):
                 Ni = Ni.subs(coeffs[j], xx[j, i])
             N.append(Ni)
 
@@ -189,10 +186,10 @@ def main():
         u += ui*fe.N[i]
 
     J = zeros(fe.nbf())
-    for i in range(0, fe.nbf()):
+    for i in range(fe.nbf()):
         Fi = u*fe.N[i]
         print(Fi)
-        for j in range(0, fe.nbf()):
+        for j in range(fe.nbf()):
             uj = us[j]
             integrands = diff(Fi, uj)
             print(integrands)

@@ -354,31 +354,31 @@ class Collector(DefaultPrinting):
                     sym, exp = presentation[0]
                     word_ = ((w[0][0], r), (sym, q*exp))
                     word_ = free_group.dtype(word_)
+                elif r != 0:
+                    word_ = ((w[0][0], r), )
+                    word_ = free_group.dtype(word_)
                 else:
-                    if r != 0:
-                        word_ = ((w[0][0], r), )
-                        word_ = free_group.dtype(word_)
-                    else:
-                        word_ = None
+                    word_ = None
                 word = word.eliminate_word(free_group.dtype(w), word_)
 
-            if len(w) == 2 and w[1][1] > 0:
-                s2, e2 = w[1]
-                s2 = ((s2, 1), )
-                s2 = free_group.dtype(s2)
-                word_ = self.map_relation(free_group.dtype(w))
-                word_ = s2*word_**e1
-                word_ = free_group.dtype(word_)
-                word = word.substituted_word(low, high, word_)
+            if len(w) == 2:
+                if w[1][1] > 0:
+                    s2, e2 = w[1]
+                    s2 = ((s2, 1), )
+                    s2 = free_group.dtype(s2)
+                    word_ = self.map_relation(free_group.dtype(w))
+                    word_ = s2*word_**e1
+                    word_ = free_group.dtype(word_)
+                    word = word.substituted_word(low, high, word_)
 
-            elif len(w) == 2 and w[1][1] < 0:
-                s2, e2 = w[1]
-                s2 = ((s2, 1), )
-                s2 = free_group.dtype(s2)
-                word_ = self.map_relation(free_group.dtype(w))
-                word_ = s2**-1*word_**e1
-                word_ = free_group.dtype(word_)
-                word = word.substituted_word(low, high, word_)
+                elif w[1][1] < 0:
+                    s2, e2 = w[1]
+                    s2 = ((s2, 1), )
+                    s2 = free_group.dtype(s2)
+                    word_ = self.map_relation(free_group.dtype(w))
+                    word_ = s2**-1*word_**e1
+                    word_ = free_group.dtype(word_)
+                    word = word.substituted_word(low, high, word_)
 
         return word
 
@@ -478,12 +478,12 @@ class Collector(DefaultPrinting):
                 word = word*perm_to_free[g]
 
             word = self.collected_word(word)
-            pc_relators[relation] = word if word else ()
+            pc_relators[relation] = word or ()
             self.pc_presentation = pc_relators
 
             collected_gens.append(gen)
             if len(collected_gens) > 1:
-                conj = collected_gens[len(collected_gens)-1]
+                conj = collected_gens[-1]
                 conjugator = perm_to_free[conj]
 
                 for j in range(len(collected_gens)-1):
@@ -499,7 +499,7 @@ class Collector(DefaultPrinting):
                         word = word*perm_to_free[g]
 
                     word = self.collected_word(word)
-                    pc_relators[relation] = word if word else ()
+                    pc_relators[relation] = word or ()
                     self.pc_presentation = pc_relators
 
         return pc_relators

@@ -488,9 +488,8 @@ class Category(Basic):
         if not isinstance(objects, Class):
             objects = Class(objects)
 
-        new_category = Basic.__new__(cls, name, objects,
+        return Basic.__new__(cls, name, objects,
                                      FiniteSet(*commutative_diagrams))
-        return new_category
 
     @property
     def name(self):
@@ -647,45 +646,46 @@ class Diagram(Basic):
         identity morphisms for the domain and the codomain of
         ``morphism``.
         """
-        if not Diagram._set_dict_union(morphisms, morphism, props):
-            # We have just added a new morphism.
+        if Diagram._set_dict_union(morphisms, morphism, props):
+            return
+        # We have just added a new morphism.
 
-            if isinstance(morphism, IdentityMorphism):
-                if props:
-                    # Properties for identity morphisms don't really
-                    # make sense, because very much is known about
-                    # identity morphisms already, so much that they
-                    # are trivial.  Having properties for identity
-                    # morphisms would only be confusing.
-                    raise ValueError(
-                        "Instances of IdentityMorphism cannot have properties.")
-                return
+        if isinstance(morphism, IdentityMorphism):
+            if props:
+                # Properties for identity morphisms don't really
+                # make sense, because very much is known about
+                # identity morphisms already, so much that they
+                # are trivial.  Having properties for identity
+                # morphisms would only be confusing.
+                raise ValueError(
+                    "Instances of IdentityMorphism cannot have properties.")
+            return
 
-            if add_identities:
-                empty = EmptySet
+        if add_identities:
+            empty = EmptySet
 
-                id_dom = IdentityMorphism(morphism.domain)
-                id_cod = IdentityMorphism(morphism.codomain)
+            id_dom = IdentityMorphism(morphism.domain)
+            id_cod = IdentityMorphism(morphism.codomain)
 
-                Diagram._set_dict_union(morphisms, id_dom, empty)
-                Diagram._set_dict_union(morphisms, id_cod, empty)
+            Diagram._set_dict_union(morphisms, id_dom, empty)
+            Diagram._set_dict_union(morphisms, id_cod, empty)
 
-            for existing_morphism, existing_props in list(morphisms.items()):
-                new_props = existing_props & props
-                if morphism.domain == existing_morphism.codomain:
-                    left = morphism * existing_morphism
-                    Diagram._set_dict_union(morphisms, left, new_props)
-                if morphism.codomain == existing_morphism.domain:
-                    right = existing_morphism * morphism
-                    Diagram._set_dict_union(morphisms, right, new_props)
+        for existing_morphism, existing_props in list(morphisms.items()):
+            new_props = existing_props & props
+            if morphism.domain == existing_morphism.codomain:
+                left = morphism * existing_morphism
+                Diagram._set_dict_union(morphisms, left, new_props)
+            if morphism.codomain == existing_morphism.domain:
+                right = existing_morphism * morphism
+                Diagram._set_dict_union(morphisms, right, new_props)
 
-            if isinstance(morphism, CompositeMorphism) and recurse_composites:
-                # This is a composite morphism, add its components as
-                # well.
-                empty = EmptySet
-                for component in morphism.components:
-                    Diagram._add_morphism_closure(morphisms, component, empty,
-                                                  add_identities)
+        if isinstance(morphism, CompositeMorphism) and recurse_composites:
+            # This is a composite morphism, add its components as
+            # well.
+            empty = EmptySet
+            for component in morphism.components:
+                Diagram._add_morphism_closure(morphisms, component, empty,
+                                              add_identities)
 
     def __new__(cls, *args):
         """
@@ -775,8 +775,7 @@ class Diagram(Basic):
                         Diagram._add_morphism_closure(
                             conclusions, morphism, empty, add_identities=False,
                             recurse_composites=False)
-            elif isinstance(conclusions_arg, dict) or \
-                    isinstance(conclusions_arg, Dict):
+            elif isinstance(conclusions_arg, (dict, Dict)):
                 # The user has supplied a dictionary of morphisms and
                 # their properties.
                 for morphism, props in conclusions_arg.items():
@@ -931,12 +930,10 @@ class Diagram(Basic):
         if not premises:
             return False
 
-        conclusions = all((m in self.conclusions) and
+        # Premises is surely ``True`` here.
+        return all((m in self.conclusions) and
                           (diagram.conclusions[m] == self.conclusions[m])
                           for m in diagram.conclusions)
-
-        # Premises is surely ``True`` here.
-        return conclusions
 
     def subdiagram_from_objects(self, objects):
         """
@@ -964,16 +961,22 @@ class Diagram(Basic):
             raise ValueError(
                 "Supplied objects should all belong to the diagram.")
 
-        new_premises = {}
-        for morphism, props in self.premises.items():
-            if ((sympify(objects.contains(morphism.domain)) is S.true) and
-                (sympify(objects.contains(morphism.codomain)) is S.true)):
-                new_premises[morphism] = props
+        new_premises = {
+            morphism: props
+            for morphism, props in self.premises.items()
+            if (
+                (sympify(objects.contains(morphism.domain)) is S.true)
+                and (sympify(objects.contains(morphism.codomain)) is S.true)
+            )
+        }
 
-        new_conclusions = {}
-        for morphism, props in self.conclusions.items():
-            if ((sympify(objects.contains(morphism.domain)) is S.true) and
-                (sympify(objects.contains(morphism.codomain)) is S.true)):
-                new_conclusions[morphism] = props
+        new_conclusions = {
+            morphism: props
+            for morphism, props in self.conclusions.items()
+            if (
+                (sympify(objects.contains(morphism.domain)) is S.true)
+                and (sympify(objects.contains(morphism.codomain)) is S.true)
+            )
+        }
 
         return Diagram(new_premises, new_conclusions)

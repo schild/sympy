@@ -125,15 +125,14 @@ def _(expr, assumptions):
 
 @RationalPredicate.register_many(Add, Mul) # type: ignore
 def _(expr, assumptions):
-    """
+        """
     * Rational + Rational     -> Rational
     * Rational + !Rational    -> !Rational
     * !Rational + !Rational   -> ?
     """
-    if expr.is_number:
-        if expr.as_real_imag()[1]:
-            return False
-    return test_closed_group(expr, assumptions, Q.rational)
+        if expr.is_number and expr.as_real_imag()[1]:
+                return False
+        return test_closed_group(expr, assumptions, Q.rational)
 
 @RationalPredicate.register(Pow) # type: ignore
 def _(expr, assumptions):
@@ -259,7 +258,7 @@ def _(expr, assumptions):
 
 @RealPredicate.register(Pow) # type: ignore
 def _(expr, assumptions):
-    """
+        """
     * Real**Integer              -> Real
     * Positive**Real             -> Real
     * Real**(Integer/Even)       -> Real if base is nonnegative
@@ -274,52 +273,52 @@ def _(expr, assumptions):
     * Real**Real                 -> ? e.g. sqrt(-1) is imaginary and
                                     sqrt(2) is not
     """
-    if expr.is_number:
-        return _RealPredicate_number(expr, assumptions)
+        if expr.is_number:
+            return _RealPredicate_number(expr, assumptions)
 
-    if expr.base == E:
-        return ask(
-            Q.integer(expr.exp/I/pi) | Q.real(expr.exp), assumptions
-        )
+        if expr.base == E:
+            return ask(
+                Q.integer(expr.exp/I/pi) | Q.real(expr.exp), assumptions
+            )
 
-    if expr.base.func == exp or (expr.base.is_Pow and expr.base.base == E):
-        if ask(Q.imaginary(expr.base.exp), assumptions):
-            if ask(Q.imaginary(expr.exp), assumptions):
-                return True
-        # If the i = (exp's arg)/(I*pi) is an integer or half-integer
-        # multiple of I*pi then 2*i will be an integer. In addition,
-        # exp(i*I*pi) = (-1)**i so the overall realness of the expr
-        # can be determined by replacing exp(i*I*pi) with (-1)**i.
-        i = expr.base.exp/I/pi
-        if ask(Q.integer(2*i), assumptions):
-            return ask(Q.real((S.NegativeOne**i)**expr.exp), assumptions)
-        return
+        if expr.base.func == exp or (expr.base.is_Pow and expr.base.base == E):
+                if ask(Q.imaginary(expr.base.exp), assumptions) and ask(
+                    Q.imaginary(expr.exp), assumptions):
+                        return True
+                # If the i = (exp's arg)/(I*pi) is an integer or half-integer
+                # multiple of I*pi then 2*i will be an integer. In addition,
+                # exp(i*I*pi) = (-1)**i so the overall realness of the expr
+                # can be determined by replacing exp(i*I*pi) with (-1)**i.
+                i = expr.base.exp/I/pi
+                if ask(Q.integer(2*i), assumptions):
+                    return ask(Q.real((S.NegativeOne**i)**expr.exp), assumptions)
+                return
 
-    if ask(Q.imaginary(expr.base), assumptions):
-        if ask(Q.integer(expr.exp), assumptions):
-            odd = ask(Q.odd(expr.exp), assumptions)
-            if odd is not None:
-                return not odd
-            return
+        if ask(Q.imaginary(expr.base), assumptions) and ask(
+            Q.integer(expr.exp), assumptions):
+                odd = ask(Q.odd(expr.exp), assumptions)
+                if odd is not None:
+                    return not odd
+                return
 
-    if ask(Q.imaginary(expr.exp), assumptions):
-        imlog = ask(Q.imaginary(log(expr.base)), assumptions)
-        if imlog is not None:
-            # I**i -> real, log(I) is imag;
-            # (2*I)**i -> complex, log(2*I) is not imag
-            return imlog
+        if ask(Q.imaginary(expr.exp), assumptions):
+            imlog = ask(Q.imaginary(log(expr.base)), assumptions)
+            if imlog is not None:
+                # I**i -> real, log(I) is imag;
+                # (2*I)**i -> complex, log(2*I) is not imag
+                return imlog
 
-    if ask(Q.real(expr.base), assumptions):
-        if ask(Q.real(expr.exp), assumptions):
-            if expr.exp.is_Rational and \
-                    ask(Q.even(expr.exp.q), assumptions):
-                return ask(Q.positive(expr.base), assumptions)
-            elif ask(Q.integer(expr.exp), assumptions):
-                return True
-            elif ask(Q.positive(expr.base), assumptions):
-                return True
-            elif ask(Q.negative(expr.base), assumptions):
-                return False
+        if ask(Q.real(expr.base), assumptions) and ask(
+            Q.real(expr.exp), assumptions):
+                if expr.exp.is_Rational and \
+                        ask(Q.even(expr.exp.q), assumptions):
+                    return ask(Q.positive(expr.base), assumptions)
+                elif ask(Q.integer(expr.exp), assumptions):
+                    return True
+                elif ask(Q.positive(expr.base), assumptions):
+                    return True
+                elif ask(Q.negative(expr.base), assumptions):
+                    return False
 
 @RealPredicate.register_many(cos, sin) # type: ignore
 def _(expr, assumptions):
@@ -406,19 +405,19 @@ def _(expr, assumptions):
 
 @HermitianPredicate.register(Pow) # type:ignore
 def _(expr, assumptions):
-    """
+        """
     * Hermitian**Integer -> Hermitian
     """
-    if expr.is_number:
+        if expr.is_number:
+            raise MDNotImplementedError
+        if expr.base == E:
+            if ask(Q.hermitian(expr.exp), assumptions):
+                return True
+            raise MDNotImplementedError
+        if ask(Q.hermitian(expr.base), assumptions) and ask(
+            Q.integer(expr.exp), assumptions):
+                return True
         raise MDNotImplementedError
-    if expr.base == E:
-        if ask(Q.hermitian(expr.exp), assumptions):
-            return True
-        raise MDNotImplementedError
-    if ask(Q.hermitian(expr.base), assumptions):
-        if ask(Q.integer(expr.exp), assumptions):
-            return True
-    raise MDNotImplementedError
 
 @HermitianPredicate.register_many(cos, sin) # type:ignore
 def _(expr, assumptions):
@@ -554,7 +553,7 @@ def _(expr, assumptions):
 
 @ImaginaryPredicate.register(Pow) # type:ignore
 def _(expr, assumptions):
-    """
+        """
     * Imaginary**Odd        -> Imaginary
     * Imaginary**Even       -> Real
     * b**Imaginary          -> !Imaginary if exponent is an integer
@@ -565,44 +564,43 @@ def _(expr, assumptions):
     * Negative**(Integer/2) -> Imaginary
     * Negative**Real        -> not Imaginary if exponent is not Rational
     """
-    if expr.is_number:
-        return _Imaginary_number(expr, assumptions)
+        if expr.is_number:
+            return _Imaginary_number(expr, assumptions)
 
-    if expr.base == E:
-        a = expr.exp/I/pi
-        return ask(Q.integer(2*a) & ~Q.integer(a), assumptions)
+        if expr.base == E:
+            a = expr.exp/I/pi
+            return ask(Q.integer(2*a) & ~Q.integer(a), assumptions)
 
-    if expr.base.func == exp or (expr.base.is_Pow and expr.base.base == E):
-        if ask(Q.imaginary(expr.base.exp), assumptions):
-            if ask(Q.imaginary(expr.exp), assumptions):
+        if (expr.base.func == exp or
+            (expr.base.is_Pow and expr.base.base == E)) and ask(
+                    Q.imaginary(expr.base.exp), assumptions):
+                if ask(Q.imaginary(expr.exp), assumptions):
+                    return False
+                i = expr.base.exp/I/pi
+                if ask(Q.integer(2*i), assumptions):
+                    return ask(Q.imaginary((S.NegativeOne**i)**expr.exp), assumptions)
+
+        if ask(Q.imaginary(expr.base), assumptions) and ask(
+            Q.integer(expr.exp), assumptions):
+                odd = ask(Q.odd(expr.exp), assumptions)
+                if odd is not None:
+                    return odd
+                return
+
+        if ask(Q.imaginary(expr.exp), assumptions):
+            imlog = ask(Q.imaginary(log(expr.base)), assumptions)
+            if imlog is not None:
+                # I**i -> real; (2*I)**i -> complex ==> not imaginary
                 return False
-            i = expr.base.exp/I/pi
-            if ask(Q.integer(2*i), assumptions):
-                return ask(Q.imaginary((S.NegativeOne**i)**expr.exp), assumptions)
 
-    if ask(Q.imaginary(expr.base), assumptions):
-        if ask(Q.integer(expr.exp), assumptions):
-            odd = ask(Q.odd(expr.exp), assumptions)
-            if odd is not None:
-                return odd
-            return
-
-    if ask(Q.imaginary(expr.exp), assumptions):
-        imlog = ask(Q.imaginary(log(expr.base)), assumptions)
-        if imlog is not None:
-            # I**i -> real; (2*I)**i -> complex ==> not imaginary
-            return False
-
-    if ask(Q.real(expr.base) & Q.real(expr.exp), assumptions):
-        if ask(Q.positive(expr.base), assumptions):
-            return False
-        else:
-            rat = ask(Q.rational(expr.exp), assumptions)
-            if not rat:
-                return rat
-            if ask(Q.integer(expr.exp), assumptions):
-                return False
-            else:
+        if ask(Q.real(expr.base) & Q.real(expr.exp), assumptions):
+                if ask(Q.positive(expr.base), assumptions):
+                        return False
+                rat = ask(Q.rational(expr.exp), assumptions)
+                if not rat:
+                    return rat
+                if ask(Q.integer(expr.exp), assumptions):
+                        return False
                 half = ask(Q.integer(2*expr.exp), assumptions)
                 if half:
                     return ask(Q.negative(expr.base), assumptions)
@@ -610,20 +608,21 @@ def _(expr, assumptions):
 
 @ImaginaryPredicate.register(log) # type:ignore
 def _(expr, assumptions):
-    if ask(Q.real(expr.args[0]), assumptions):
-        if ask(Q.positive(expr.args[0]), assumptions):
+        if ask(Q.real(expr.args[0]), assumptions):
+            if ask(Q.positive(expr.args[0]), assumptions):
+                return False
+            return
+            # XXX it should be enough to do
+            # return ask(Q.nonpositive(expr.args[0]), assumptions)
+            # but ask(Q.nonpositive(exp(x)), Q.imaginary(x)) -> None;
+            # it should return True since exp(x) will be either 0 or complex
+        if (expr.args[0].func == exp or
+            (expr.args[0].is_Pow
+             and expr.args[0].base == E)) and expr.args[0].exp in [I, -I]:
+                return True
+        im = ask(Q.imaginary(expr.args[0]), assumptions)
+        if im is False:
             return False
-        return
-    # XXX it should be enough to do
-    # return ask(Q.nonpositive(expr.args[0]), assumptions)
-    # but ask(Q.nonpositive(exp(x)), Q.imaginary(x)) -> None;
-    # it should return True since exp(x) will be either 0 or complex
-    if expr.args[0].func == exp or (expr.args[0].is_Pow and expr.args[0].base == E):
-        if expr.args[0].exp in [I, -I]:
-            return True
-    im = ask(Q.imaginary(expr.args[0]), assumptions)
-    if im is False:
-        return False
 
 @ImaginaryPredicate.register(exp) # type:ignore
 def _(expr, assumptions):
@@ -632,7 +631,7 @@ def _(expr, assumptions):
 
 @ImaginaryPredicate.register_many(Number, NumberSymbol) # type:ignore
 def _(expr, assumptions):
-    return not (expr.as_real_imag()[1] == 0)
+        return expr.as_real_imag()[1] != 0
 
 @ImaginaryPredicate.register(NaN) # type:ignore
 def _(expr, assumptions):

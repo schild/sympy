@@ -318,10 +318,6 @@ def linkcode_resolve(domain, info):
     except Exception:
         lineno = None
 
-    if lineno:
-        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
-    else:
-        linespec = ""
-
+    linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1) if lineno else ""
     fn = os.path.relpath(fn, start=os.path.dirname(sympy.__file__))
     return blobpath + fn + linespec

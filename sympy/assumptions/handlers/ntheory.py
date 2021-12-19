@@ -98,21 +98,19 @@ def _(expr, assumptions):
 @CompositePredicate.register(Basic) # type: ignore
 def _(expr, assumptions):
     _positive = ask(Q.positive(expr), assumptions)
-    if _positive:
-        _integer = ask(Q.integer(expr), assumptions)
-        if _integer:
-            _prime = ask(Q.prime(expr), assumptions)
-            if _prime is None:
-                return
-            # Positive integer which is not prime is not
-            # necessarily composite
-            if expr.equals(1):
-                return False
-            return not _prime
-        else:
-            return _integer
-    else:
+    if not _positive:
         return _positive
+    _integer = ask(Q.integer(expr), assumptions)
+    if not _integer:
+        return _integer
+    _prime = ask(Q.prime(expr), assumptions)
+    if _prime is None:
+        return
+    # Positive integer which is not prime is not
+    # necessarily composite
+    if expr.equals(1):
+        return False
+    return not _prime
 
 
 # EvenPredicate

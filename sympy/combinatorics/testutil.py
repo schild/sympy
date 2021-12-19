@@ -117,9 +117,7 @@ def _verify_bsgs(group, base, gens):
         if current_stabilizer.order() != candidate.order():
             return False
         current_stabilizer = current_stabilizer.stabilizer(base[i])
-    if current_stabilizer.order() != 1:
-        return False
-    return True
+    return current_stabilizer.order() == 1
 
 
 def _verify_centralizer(group, arg, centr=None):
@@ -270,9 +268,8 @@ def canonicalize_naive(g, dummies, sym, *v):
     a.sort()
     prev = (0,)*size
     for h in a:
-        if h[:-2] == prev[:-2]:
-            if h[-1] != prev[-1]:
-                return 0
+        if h[:-2] == prev[:-2] and h[-1] != prev[-1]:
+            return 0
         prev = h
     return list(a[0])
 
@@ -354,5 +351,4 @@ def graph_certificate(gr):
             v.append((base, gens, n, 0))
     v.reverse()
     dummies = list(range(num_indices))
-    can = canonicalize(g, dummies, 0, *v)
-    return can
+    return canonicalize(g, dummies, 0, *v)

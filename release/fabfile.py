@@ -449,7 +449,7 @@ def compare_tar_against_git():
     """
     with hide("commands"):
         with cd("/home/vagrant/repos/sympy"):
-            git_lsfiles = set([i.strip() for i in run("git ls-files").split("\n")])
+            git_lsfiles = {i.strip() for i in run("git ls-files").split("\n")}
         tar_output_orig = set(show_files('source', print_=False).split("\n"))
         tar_output = set()
     for file in tar_output_orig:
@@ -619,9 +619,8 @@ def get_tarball_name(file):
     else:
         raise ValueError(file + " is not a recognized argument")
 
-    ret = name.format(version=version, type=file,
+    return name.format(version=version, type=file,
         extension=doctypename[file], wintype=winos[file])
-    return ret
 
 tarball_name_types = {
     'source-orig',
@@ -1019,12 +1018,13 @@ def GitHub_release(username=None, user='sympy', token=None,
 
     # See https://developer.github.com/v3/repos/releases/#create-a-release
     # First, create the release
-    post = {}
-    post['tag_name'] = tag
-    post['name'] = "SymPy " + version
-    post['body'] = release_text
-    post['draft'] = draft
-    post['prerelease'] = prerelease
+    post = {
+        'tag_name': tag,
+        'name': "SymPy " + version,
+        'body': release_text,
+        'draft': draft,
+        'prerelease': prerelease,
+    }
 
     print("Creating release for tag", tag, end=' ')
 
@@ -1038,9 +1038,7 @@ def GitHub_release(username=None, user='sympy', token=None,
     for key in descriptions:
         tarball = get_tarball_name(key)
 
-        params = {}
-        params['name'] = tarball
-
+        params = {'name': tarball}
         if tarball.endswith('gz'):
             headers = {'Content-Type':'application/gzip'}
         elif tarball.endswith('pdf'):

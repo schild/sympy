@@ -18,10 +18,7 @@ from sympy import (exp, Symbol, sin, dsolve, Function,
 
 
 def grad(f, X):
-    a = []
-    for x in X:
-        a.append(f.diff(x))
-    return a
+    return [f.diff(x) for x in X]
 
 
 def d(m, x):
@@ -51,11 +48,8 @@ class G:
     def udd(self, i, k, l):
         g = self.g
         x = self.x
-        r = 0
-        for m in [0, 1, 2, 3]:
-            r += g.uu(i, m)/2 * (g.dd(m, k).diff(x[l]) + g.dd(m, l).diff(x[k])
-                    - g.dd(k, l).diff(x[m]))
-        return r
+        return sum(g.uu(i, m)/2 * (g.dd(m, k).diff(x[l]) + g.dd(m, l).diff(x[k])
+                    - g.dd(k, l).diff(x[m])) for m in [0, 1, 2, 3])
 
 
 class Riemann:
@@ -82,15 +76,10 @@ class Ricci:
     def dd(self, mu, nu):
         R = self.R
         x = self.x
-        r = 0
-        for lam in [0, 1, 2, 3]:
-            r += R.uddd(lam, mu, lam, nu)
-        return r
+        return sum(R.uddd(lam, mu, lam, nu) for lam in [0, 1, 2, 3])
 
     def ud(self, mu, nu):
-        r = 0
-        for lam in [0, 1, 2, 3]:
-            r += self.g.uu(mu, lam)*self.dd(lam, nu)
+        r = sum(self.g.uu(mu, lam)*self.dd(lam, nu) for lam in [0, 1, 2, 3])
         return r.expand()
 
 
