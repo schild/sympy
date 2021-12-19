@@ -107,7 +107,7 @@ def _(expr, assumptions):
         else:
             sign = s
         # once False, do not change
-        if result is not False:
+        if result:
             result = _bounded
     return result
 
@@ -160,7 +160,7 @@ def _(expr, assumptions):
                 return None
             if ask(Q.extended_nonzero(arg), assumptions) is None:
                 return None
-            if result is not False:
+            if result:
                 result = None
         else:
             result = False

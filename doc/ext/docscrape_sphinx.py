@@ -26,17 +26,10 @@ class SphinxDocString(NumpyDocString):
         return [':' + name + ':']
 
     def _str_indent(self, doc, indent=4):
-        out = []
-        for line in doc:
-            out += [' '*indent + line]
-        return out
+        return [' '*indent + line for line in doc]
 
     def _str_signature(self):
         return ['']
-        if self['Signature']:
-            return ['``%s``' % self['Signature']] + ['']
-        else:
-            return ['']
 
     def _str_summary(self):
         return self['Summary'] + ['']
@@ -129,7 +122,7 @@ class SphinxDocString(NumpyDocString):
             #     out += [''] + autosum
 
             if others:
-                maxlen_0 = max(3, max([len(x[0]) for x in others]))
+                maxlen_0 = max(3, max(len(x[0]) for x in others))
                 hdr = "="*maxlen_0 + "  " + "="*10
                 fmt = '%%%ds  %%s  ' % (maxlen_0,)
                 out += ['', '', hdr]
@@ -208,16 +201,18 @@ class SphinxDocString(NumpyDocString):
     def _str_examples(self):
         examples_str = "\n".join(self['Examples'])
 
-        if (self.use_plots and 'import matplotlib' in examples_str
-                and 'plot::' not in examples_str):
-            out = []
-            out += self._str_header('Examples')
-            out += ['.. plot::', '']
-            out += self._str_indent(self['Examples'])
-            out += ['']
-            return out
-        else:
+        if (
+            not self.use_plots
+            or 'import matplotlib' not in examples_str
+            or 'plot::' in examples_str
+        ):
             return self._str_section('Examples')
+        out = []
+        out += self._str_header('Examples')
+        out += ['.. plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
+        return out
 
     def __str__(self, indent=0, func_role="obj"):
         out = []

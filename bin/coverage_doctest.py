@@ -17,6 +17,7 @@ or
 If no arguments are given, all files in sympy/ are checked.
 """
 
+
 from __future__ import print_function
 
 import os
@@ -53,10 +54,8 @@ color_templates = (
     ("White", "1;37"),
 )
 
-colors = {}
+colors = dict(color_templates)
 
-for name, value in color_templates:
-    colors[name] = value
 c_normal = '\033[0m'
 c_color = '\033[%sm'
 
@@ -79,13 +78,9 @@ def print_coverage(module_path, c, c_missing_doc, c_missing_doctest, c_indirect_
     """ Prints details (depending on verbose) of a module """
 
     doctest_color = "Brown"
-    sphinx_color = "DarkGray"
     less_100_color = "Red"
     less_50_color = "LightRed"
     equal_100_color = "Green"
-    big_header_color = "LightPurple"
-    small_header_color = "Purple"
-
     if no_color:
         score_string = "Doctests: %s%% (%s of %s)" % (score, total_doctests,
             total_members)
@@ -102,6 +97,7 @@ def print_coverage(module_path, c, c_missing_doc, c_missing_doctest, c_indirect_
             (c_color % colors[doctest_color], c_normal, c_color % colors[equal_100_color], score, total_doctests, total_members, c_normal)
 
     if sphinx:
+        sphinx_color = "DarkGray"
         if no_color:
             sphinx_score_string = "Sphinx: %s%% (%s of %s)" % (sphinx_score,
                 total_members - total_sphinx, total_members)
@@ -125,14 +121,16 @@ def print_coverage(module_path, c, c_missing_doc, c_missing_doctest, c_indirect_
         print('\n' + '-'*70)
         print(module_path)
         print('-'*70)
+    elif sphinx:
+        print("%s: %s %s" % (module_path, score_string, sphinx_score_string))
     else:
-        if sphinx:
-            print("%s: %s %s" % (module_path, score_string, sphinx_score_string))
-        else:
-            print("%s: %s" % (module_path, score_string))
+        print("%s: %s" % (module_path, score_string))
 
     if verbose:
+        big_header_color = "LightPurple"
         print_header('CLASSES', '*', not no_color and big_header_color)
+        small_header_color = "Purple"
+
         if not c:
             print_header('No classes found!')
 
@@ -194,10 +192,7 @@ def _is_indirect(member, doc):
 
     d = member in doc
     e = 'indirect doctest' in doc
-    if not d and not e:
-        return True
-    else:
-        return False
+    return not d and not e
 
 
 def _get_arg_list(name, fobj):
@@ -234,10 +229,7 @@ def _get_arg_list(name, fobj):
     # Truncate long arguments
     arg_list = [x[:trunc] for x in arg_list]
 
-    # Construct the parameter string (enclosed in brackets)
-    str_param = "%s(%s)" % (name, ', '.join(arg_list))
-
-    return str_param
+    return "%s(%s)" % (name, ', '.join(arg_list))
 
 
 def get_mod_name(path, base):
@@ -317,7 +309,7 @@ def process_function(name, c_name, b_obj, mod_path, f_skip, f_missing_doc, f_mis
         if isinstance(doc, str):
             if not doc:
                 add_missing_doc = True
-            elif not '>>>' in doc:
+            elif '>>>' not in doc:
                 add_missing_doctest = True
             elif _is_indirect(name, doc):
                 add_indirect_doctest = True
@@ -349,8 +341,8 @@ def process_function(name, c_name, b_obj, mod_path, f_skip, f_missing_doc, f_mis
             f_missing_doctest.append(full_name)
         elif add_indirect_doctest:
             f_indirect_doctest.append(full_name)
-        if not in_sphinx:
-            sph.append(full_name)
+    if not in_sphinx:
+        sph.append(full_name)
 
     return f_doctest, function
 
@@ -384,7 +376,7 @@ def process_class(c_name, obj, c_skip, c_missing_doc, c_missing_doctest, c_indir
     if isinstance(doc, str):
         if not doc:
             c_missing_doc.append(full_name)
-        elif not '>>>' in doc:
+        elif '>>>' not in doc:
             c_missing_doctest.append(full_name)
         elif _is_indirect(c_name, doc):
             c_indirect_doctest.append(full_name)
@@ -402,10 +394,7 @@ def process_class(c_name, obj, c_skip, c_missing_doc, c_missing_doctest, c_indir
     else:
         raise TypeError('Current doc type of ', print(obj), ' is ', type(doc), '. Docstring must be a string, property , or none')
 
-    in_sphinx = False
-    if sphinx:
-        in_sphinx = find_sphinx(c_name, mod_path)
-
+    in_sphinx = find_sphinx(c_name, mod_path) if sphinx else False
     if not in_sphinx:
         sph.append(full_name)
 
@@ -462,7 +451,7 @@ def coverage(module_path, verbose=False, no_color=False, sphinx=True):
         obj_mod = inspect.getmodule(obj)
 
         # Function not a part of this module
-        if not obj_mod or not obj_mod.__name__ == module_path:
+        if not obj_mod or obj_mod.__name__ != module_path:
             continue
 
         # If it's a function
@@ -476,7 +465,6 @@ def coverage(module_path, verbose=False, no_color=False, sphinx=True):
             if f_dt:
                 f_doctests += 1
 
-        # If it's a class, look at it's methods too
         elif inspect.isclass(obj):
 
             # Process the class first
@@ -496,7 +484,7 @@ def coverage(module_path, verbose=False, no_color=False, sphinx=True):
                     continue
 
                 # Check if def funcname appears in source
-                if not ("def " + f_name) in ' '.join(source):
+                if "def " + f_name not in ' '.join(source):
                     continue
 
                 # Identify the module of the current class member
@@ -504,7 +492,7 @@ def coverage(module_path, verbose=False, no_color=False, sphinx=True):
                 obj_mod = inspect.getmodule(f_obj)
 
                 # Function not a part of this module
-                if not obj_mod or not obj_mod.__name__ == module_path:
+                if not obj_mod or obj_mod.__name__ != module_path:
                     continue
 
                 # If it's a function
@@ -521,10 +509,7 @@ def coverage(module_path, verbose=False, no_color=False, sphinx=True):
     # Evaluate the percent coverage
     total_doctests = c_doctests + f_doctests
     total_members = classes + functions
-    if total_members:
-        score = 100 * float(total_doctests) / (total_members)
-    else:
-        score = 100
+    score = 100 * float(total_doctests) / (total_members) if total_members else 100
     score = int(score)
 
     if sphinx:

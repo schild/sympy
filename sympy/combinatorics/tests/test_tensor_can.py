@@ -535,10 +535,7 @@ def test_graph_certificate():
     def randomize_graph(size, g):
         p = list(range(size))
         random.shuffle(p)
-        g1a = {}
-        for k, v in g1.items():
-            g1a[p[k]] = [p[i] for i in v]
-        return g1a
+        return {p[k]: [p[i] for i in v] for k, v in g1.items()}
 
     g1 = {0: [2, 3, 7], 1: [4, 5, 7], 2: [0, 4, 6], 3: [0, 6, 7], 4: [1, 2, 5], 5: [1, 4, 6], 6: [2, 3, 5], 7: [0, 1, 3]}
     g2 = {0: [2, 3, 7], 1: [2, 4, 5], 2: [0, 1, 5], 3: [0, 6, 7], 4: [1, 5, 6], 5: [1, 2, 4], 6: [3, 4, 7], 7: [0, 3, 6]}

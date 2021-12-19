@@ -68,12 +68,13 @@ def _GitHub_release(version, push, username=None, user='sympy', token=None,
 
     # See https://developer.github.com/v3/repos/releases/#create-a-release
     # First, create the release
-    post = {}
-    post['tag_name'] = tag
-    post['name'] = "SymPy " + version
-    post['body'] = release_text
-    post['draft'] = draft
-    post['prerelease'] = prerelease
+    post = {
+        'tag_name': tag,
+        'name': "SymPy " + version,
+        'body': release_text,
+        'draft': draft,
+        'prerelease': prerelease,
+    }
 
     print("Creating release for tag", tag, end=' ')
 
@@ -90,9 +91,7 @@ def _GitHub_release(version, push, username=None, user='sympy', token=None,
     for key in descriptions:
         tarball = get_tarball_name(key, version)
 
-        params = {}
-        params['name'] = tarball
-
+        params = {'name': tarball}
         if tarball.endswith('gz'):
             headers = {'Content-Type':'application/gzip'}
         elif tarball.endswith('pdf'):
@@ -494,9 +493,8 @@ def get_tarball_name(file, version):
     else:
         raise ValueError(file + " is not a recognized argument")
 
-    ret = name.format(version=version, type=file,
+    return name.format(version=version, type=file,
         extension=doctypename[file])
-    return ret
 
 
 def release_files(version):

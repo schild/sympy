@@ -52,10 +52,7 @@ def l2_projection(f, basis, lim):
     """
     L2 projects the function f on the basis over the domain lim.
     """
-    r = 0
-    for b in basis:
-        r += l2_inner_product(f, b, lim) * b
-    return r
+    return sum(l2_inner_product(f, b, lim) * b for b in basis)
 
 
 def l2_gram_schmidt(list, lim):
@@ -75,10 +72,7 @@ def l2_gram_schmidt(list, lim):
     """
     r = []
     for a in list:
-        if r == []:
-            v = a
-        else:
-            v = a - l2_projection(a, r, lim)
+        v = a if r == [] else a - l2_projection(a, r, lim)
         v_norm = l2_norm(v, lim)
         if v_norm == 0:
             raise ValueError("The sequence is not linearly independent.")
@@ -94,10 +88,7 @@ def series(L):
     """
     Normalizes the series.
     """
-    r = 0
-    for b in L:
-        r += integ(b)*b
-    return r
+    return sum(integ(b)*b for b in L)
 
 
 def msolve(f, x):
@@ -112,12 +103,12 @@ def msolve(f, x):
     x0 = -0.001
     dx = 0.001
     while f(x0 - dx) * f(x0) > 0:
-        x0 = x0 - dx
+        x0 -= dx
     x_max = x0 - dx
     x_min = x0
     assert f(x_max) > 0
     assert f(x_min) < 0
-    for n in range(100):
+    for _ in range(100):
         x0 = (x_max + x_min)/2
         if f(x0) > 0:
             x_max = x0

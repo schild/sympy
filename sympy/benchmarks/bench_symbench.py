@@ -48,8 +48,7 @@ def bench_R5():
             L.append( (L[i] + L[i + 1]) * L[i + 2] )
 
     def uniq(x):
-        v = set(x)
-        return v
+        return set(x)
     L = [x, y, z]
     blowup(L, 8)
     L = uniq(L)
@@ -76,7 +75,7 @@ def bench_R8():
         Deltax = (b - a)/n
         c = a
         est = 0
-        for i in range(n):
+        for _ in range(n):
             c += Deltax
             est += f.subs(x, c)
         return est*Deltax

@@ -135,10 +135,7 @@ def _dumx_remove(dumx, dumx_flat, p0):
             res.append(dx)
             continue
         k = dx.index(p0)
-        if k % 2 == 0:
-            p0_paired = dx[k + 1]
-        else:
-            p0_paired = dx[k - 1]
+        p0_paired = dx[k + 1] if k % 2 == 0 else dx[k - 1]
         dx.remove(p0)
         dx.remove(p0_paired)
         dumx_flat.remove(p0)
@@ -403,7 +400,7 @@ def double_coset_can_rep(dummies, sym, b_S, sgens, S_transversals, g):
     g = g.array_form
     num_dummies = size - 2
     indices = list(range(num_dummies))
-    all_metrics_with_sym = not any(_ is None for _ in sym)
+    all_metrics_with_sym = all(_ is not None for _ in sym)
     num_types = len(sym)
     dumx = dummies[:]
     dumx_flat = []
@@ -436,7 +433,7 @@ def double_coset_can_rep(dummies, sym, b_S, sgens, S_transversals, g):
             md = [min(_orbit(size, [_af_new(
                 ddx) for ddx in dsgsx], ii)) for ii in range(size - 2)]
 
-        p_i = min([min([md[h[x]] for x in deltab]) for s, d, h in TAB])
+        p_i = min(min(md[h[x]] for x in deltab) for s, d, h in TAB)
         dsgsx1 = [_af_new(_) for _ in dsgsx]
         Dxtrav = _orbit_transversal(size, dsgsx1, p_i, False, af=True) \
             if dsgsx else None
@@ -459,7 +456,7 @@ def double_coset_can_rep(dummies, sym, b_S, sgens, S_transversals, g):
         TAB1 = []
         while TAB:
             s, d, h = TAB.pop()
-            if min([md[h[x]] for x in deltab]) != p_i:
+            if min(md[h[x]] for x in deltab) != p_i:
                 continue
             deltab1 = [x for x in deltab if md[h[x]] == p_i]
             # NEXT = s*deltab1 intersection (d*g)**-1*deltap
@@ -501,9 +498,9 @@ def double_coset_can_rep(dummies, sym, b_S, sgens, S_transversals, g):
                     d1 = _trace_D(dg[j], p_i, Dxtrav)
                     if not d1:
                         continue
+                elif p_i != dg[j]:
+                    continue
                 else:
-                    if p_i != dg[j]:
-                        continue
                     d1 = idn
                 assert d1[dg[j]] == p_i  # invariant
                 d1 = [d1[ix] for ix in d]
@@ -593,7 +590,7 @@ def canonical_free(base, gens, g, num_free):
         if x not in base:
             base.append(x)
     h = g
-    for i, transv in enumerate(transversals):
+    for transv in transversals:
         h_i = [size]*num_free
         # find the element s in transversals[i] such that
         # _af_rmul(h, s) has its free elements with the lowest position in h
@@ -768,7 +765,7 @@ def canonicalize(g, dummies, msym, *v):
         num_types = 1
     else:
         num_types = len(msym)
-        if not all(msymx in (0, 1, None) for msymx in msym):
+        if any(msymx not in (0, 1, None) for msymx in msym):
             raise ValueError('msym entries must be 0, 1 or None')
         if len(dummies) != num_types:
             raise ValueError(
@@ -824,14 +821,10 @@ def canonicalize(g, dummies, msym, *v):
         base_i, gens_i, n_i, sym_i = v[i]
         len_tens = gens_i[0].size - 2
         # for each component tensor get a list od fixed islots
-        for j in range(n_i):
+        for _ in range(n_i):
             # get the elements corresponding to the component tensor
             h = g1[start:(start + len_tens)]
-            fr = []
-            # get the positions of the fixed elements in h
-            for k in free:
-                if k in h:
-                    fr.append(h.index(k))
+            fr = [h.index(k) for k in free if k in h]
             free_i.append(fr)
             start += len_tens
         v1[i] = (base_i, gens_i, free_i, sym_i)

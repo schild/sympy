@@ -205,20 +205,19 @@ class RewritingSystem:
             return result
 
         def _process_overlap(w, r1, r2, check):
-                s = w.eliminate_word(r1, self.rules[r1])
-                s = self.reduce(s)
-                t = w.eliminate_word(r2, self.rules[r2])
-                t = self.reduce(t)
-                if s != t:
-                    if check:
-                        # system not confluent
-                        return [0]
-                    try:
-                        new_keys = self.add_rule(t, s, check)
-                        return new_keys
-                    except RuntimeError:
-                        return False
-                return
+            s = w.eliminate_word(r1, self.rules[r1])
+            s = self.reduce(s)
+            t = w.eliminate_word(r2, self.rules[r2])
+            t = self.reduce(t)
+            if s != t:
+                if check:
+                    # system not confluent
+                    return [0]
+                try:
+                    return self.add_rule(t, s, check)
+                except RuntimeError:
+                    return False
+            return
 
         added = 0
         i = 0
@@ -288,9 +287,9 @@ class RewritingSystem:
         new = word
         while again:
             again = False
-            for r in rules:
+            for r, value in rules.items():
                 prev = new
-                if rules[r]**-1 > r**-1:
+                if value ** -1 > r ** -1:
                     new = new.eliminate_word(r, rules[r], _all=True, inverse=False)
                 else:
                     new = new.eliminate_word(r, rules[r], _all=True)
@@ -361,7 +360,7 @@ class RewritingSystem:
             automaton_alphabet += rule.letter_form_elm
             # Compute the proper prefixes for every rule.
             proper_prefixes[rule] = []
-            letter_word_array = [s for s in rule.letter_form_elm]
+            letter_word_array = list(rule.letter_form_elm)
             len_letter_word_array = len(letter_word_array)
             for i in range (1, len_letter_word_array):
                 letter_word_array[i] = letter_word_array[i-1]*letter_word_array[i]
@@ -441,8 +440,8 @@ class RewritingSystem:
         while flag:
             flag = 0
             current_state = self.reduction_automaton.states['start']
-            word_array = [s for s in word.letter_form_elm]
-            for i in range (0, len(word_array)):
+            word_array = list(word.letter_form_elm)
+            for i in range(len(word_array)):
                 next_state_name = current_state.transitions[word_array[i]]
                 next_state = self.reduction_automaton.states[next_state_name]
                 if next_state.state_type == 'd':

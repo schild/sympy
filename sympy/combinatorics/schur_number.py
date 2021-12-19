@@ -38,16 +38,17 @@ class SchurNumber(Function):
 
     @classmethod
     def eval(cls, k):
-        if k.is_Number:
-            if k is S.Infinity:
-                return S.Infinity
-            if k.is_zero:
-                return S.Zero
-            if not k.is_integer or k.is_negative:
-                raise ValueError("k should be a positive integer")
+        if not k.is_Number:
+            return
+        if k is S.Infinity:
+            return S.Infinity
+        if k.is_zero:
+            return S.Zero
+        if not k.is_integer or k.is_negative:
+            raise ValueError("k should be a positive integer")
+        if k <= 5:
             first_known_schur_numbers = {1: 1, 2: 4, 3: 13, 4: 44, 5: 160}
-            if k <= 5:
-                return Integer(first_known_schur_numbers[k])
+            return Integer(first_known_schur_numbers[k])
 
     def lower_bound(self):
         f_ = self.args[0]
@@ -153,7 +154,7 @@ def _generate_next_list(current_list, n):
         new_item = temp_1 + temp_2
         new_list.append(new_item)
 
-    last_list = [3*k + 1 for k in range(0, len(current_list)+1) if 3*k + 1 <= n]
+    last_list = [3*k + 1 for k in range(len(current_list)+1) if 3*k + 1 <= n]
     new_list.append(last_list)
     current_list = new_list
 

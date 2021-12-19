@@ -263,8 +263,8 @@ class Partition(FiniteSet):
         for i, part in enumerate(partition):
             for j in part:
                 rgs[j] = i
-        return tuple([rgs[i] for i in sorted(
-            [i for p in partition for i in p], key=default_sort_key)])
+        return tuple(rgs[i] for i in sorted(
+                [i for p in partition for i in p], key=default_sort_key))
 
     @classmethod
     def from_rgs(self, rgs, elements):
@@ -296,11 +296,9 @@ class Partition(FiniteSet):
             raise ValueError('mismatch in rgs and element lengths')
         max_elem = max(rgs) + 1
         partition = [[] for i in range(max_elem)]
-        j = 0
-        for i in rgs:
+        for j, i in enumerate(rgs):
             partition[i].append(elements[j])
-            j += 1
-        if not all(p for p in partition):
+        if not all(partition):
             raise ValueError('some blocks of the partition were empty.')
         return Partition(*partition)
 
@@ -465,24 +463,23 @@ class IntegerPartition(Basic):
                 d[b + 1] += 1
                 d[1] = (d[b] - 1)*b
                 d[b] = 0
-        else:
-            if d[a] > 1:
-                if len(key) == 1:
-                    d.clear()
-                    d[a + 1] = 1
-                    d[1] = self.integer - a - 1
-                else:
-                    a1 = a + 1
-                    d[a1] += 1
-                    d[1] = d[a]*a - a1
-                    d[a] = 0
+        elif d[a] > 1:
+            if len(key) == 1:
+                d.clear()
+                d[a + 1] = 1
+                d[1] = self.integer - a - 1
             else:
-                b = key[-2]
-                b1 = b + 1
-                d[b1] += 1
-                need = d[b]*b + d[a]*a - b1
-                d[a] = d[b] = 0
-                d[1] = need
+                a1 = a + 1
+                d[a1] += 1
+                d[1] = d[a]*a - a1
+                d[a] = 0
+        else:
+            b = key[-2]
+            b1 = b + 1
+            d[b1] += 1
+            need = d[b]*b + d[a]*a - b1
+            d[a] = d[b] = 0
+            d[1] = need
         return IntegerPartition(self.integer, d)
 
     def as_dict(self):
@@ -638,15 +635,12 @@ def RGS_generalized(m):
     [203,   0,   0,  0,  0, 0, 0]])
     """
     d = zeros(m + 1)
-    for i in range(0, m + 1):
+    for i in range(m + 1):
         d[0, i] = 1
 
     for i in range(1, m + 1):
         for j in range(m):
-            if j <= m - i:
-                d[i, j] = j * d[i - 1, j] + d[i - 1, j + 1]
-            else:
-                d[i, j] = 0
+            d[i, j] = j * d[i - 1, j] + d[i - 1, j + 1] if j <= m - i else 0
     return d
 
 
@@ -740,6 +734,6 @@ def RGS_rank(rgs):
     D = RGS_generalized(rgs_size)
     for i in range(1, rgs_size):
         n = len(rgs[(i + 1):])
-        m = max(rgs[0:i])
+        m = max(rgs[:i])
         rank += D[n, m + 1] * rgs[i]
     return rank

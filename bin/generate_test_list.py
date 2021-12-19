@@ -49,10 +49,9 @@ def get_paths(level=15):
 
     """
     wildcards = ["/"]
-    for i in range(level):
+    for _ in range(level):
         wildcards.append(wildcards[-1] + "*/")
-    p = ["sympy" + x + "test_*.py" for x in wildcards]
-    return p
+    return ["sympy" + x + "test_*.py" for x in wildcards]
 
 def generate_test_list():
     g = []

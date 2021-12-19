@@ -10,7 +10,7 @@ def test_SumApprox_trivial():
     expr1 = 1 + x
     sum_approx = SumApprox(bounds={x: (-1e-20, 1e-20)}, reltol=1e-16)
     apx1 = optimize(expr1, [sum_approx])
-    assert apx1 - 1 == 0
+    assert apx1 == 1
 
 
 def test_SumApprox_monotone_terms():

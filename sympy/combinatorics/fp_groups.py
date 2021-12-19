@@ -140,16 +140,13 @@ class FpGroup(DefaultPrinting):
 
         if not all(isinstance(g, FreeGroupElement) for g in gens):
             raise ValueError("Generators must be `FreeGroupElement`s")
-        if not all(g.group == self.free_group for g in gens):
-                raise ValueError("Given generators are not members of the group")
+        if any(g.group != self.free_group for g in gens):
+            raise ValueError("Given generators are not members of the group")
         if homomorphism:
             g, rels, _gens = reidemeister_presentation(self, gens, C=C, homomorphism=True)
         else:
             g, rels = reidemeister_presentation(self, gens, C=C)
-        if g:
-            g = FpGroup(g[0].group, rels)
-        else:
-            g = FpGroup(free_group('')[0], [])
+        g = FpGroup(g[0].group, rels) if g else FpGroup(free_group('')[0], [])
         if homomorphism:
             from sympy.combinatorics.homomorphisms import homomorphism
             return g, homomorphism(g, self, g.generators, _gens, check=False)
@@ -199,13 +196,12 @@ class FpGroup(DefaultPrinting):
 
         """
         if not H:
-            if self._coset_table is not None:
-                if not self._is_standardized:
-                    self.standardize_coset_table()
-            else:
+            if self._coset_table is None:
                 C = self.coset_enumeration([], strategy, max_cosets=max_cosets,
                                             draft=draft, incomplete=incomplete)
                 self._coset_table = C
+                self.standardize_coset_table()
+            elif not self._is_standardized:
                 self.standardize_coset_table()
             return self._coset_table.table
         else:
@@ -261,12 +257,13 @@ class FpGroup(DefaultPrinting):
             used_gens.update(r.contains_generators())
         if not set(self.generators) <= used_gens:
             return True
-        # Abelianisation test: check is the abelianisation is infinite
-        abelian_rels = []
         from sympy.matrices.normalforms import invariant_factors
         from sympy.matrices import Matrix
-        for rel in self.relators:
-            abelian_rels.append([rel.exponent_sum(g) for g in self.generators])
+        # Abelianisation test: check is the abelianisation is infinite
+        abelian_rels = [
+            [rel.exponent_sum(g) for g in self.generators] for rel in self.relators
+        ]
+
         m = Matrix(Matrix(abelian_rels))
         if 0 in invariant_factors(m):
             return True
@@ -325,13 +322,13 @@ class FpGroup(DefaultPrinting):
     def most_frequent_generator(self):
         gens = self.generators
         rels = self.relators
-        freqs = [sum([r.generator_count(g) for r in rels]) for g in gens]
+        freqs = [sum(r.generator_count(g) for r in rels) for g in gens]
         return gens[freqs.index(max(freqs))]
 
     def random(self):
         import random
         r = self.free_group.identity
-        for i in range(random.randint(2,3)):
+        for _ in range(random.randint(2,3)):
             r = r*random.choice(self.generators)**random.choice([1,-1])
         return r
 
@@ -350,21 +347,17 @@ class FpGroup(DefaultPrinting):
         4
 
         """
-        # TODO: use |G:H| = |G|/|H| (currently H can't be made into a group)
-        # when we know |G| and |H|
-
         if H == []:
             return self.order()
-        else:
-            C = self.coset_enumeration(H, strategy)
-            return len(C.table)
+        C = self.coset_enumeration(H, strategy)
+        return len(C.table)
 
     def __str__(self):
-        if self.free_group.rank > 30:
-            str_form = "<fp group with %s generators>" % self.free_group.rank
-        else:
-            str_form = "<fp group on the generators %s>" % str(self.generators)
-        return str_form
+        return (
+            "<fp group with %s generators>" % self.free_group.rank
+            if self.free_group.rank > 30
+            else "<fp group on the generators %s>" % str(self.generators)
+        )
 
     __repr__ = __str__
 
@@ -645,10 +638,9 @@ class FpSubgroup(DefaultPrinting):
                 w, r = w.cyclic_reduction(removed=True)
                 if r.is_identity or self.normal:
                     return w in min_words
-                else:
-                    t = [s[1] for s in min_words if isinstance(s, tuple)
-                                                                and s[0] == r]
-                    return [s for s in t if w.power_of(s)] != []
+                t = [s[1] for s in min_words if isinstance(s, tuple)
+                                                            and s[0] == r]
+                return [s for s in t if w.power_of(s)] != []
 
             # store the solution of words for which the result of
             # _word_break (below) is known
@@ -704,11 +696,11 @@ class FpSubgroup(DefaultPrinting):
         return self.parent.subgroup(C=self.C)
 
     def __str__(self):
-        if len(self.generators) > 30:
-            str_form = "<fp subgroup with %s generators>" % len(self.generators)
-        else:
-            str_form = "<fp subgroup on the generators %s>" % str(self.generators)
-        return str_form
+        return (
+            "<fp subgroup with %s generators>" % len(self.generators)
+            if len(self.generators) > 30
+            else "<fp subgroup on the generators %s>" % str(self.generators)
+        )
 
     __repr__ = __str__
 
@@ -796,10 +788,11 @@ def descendant_subgroups(S, C, R1_c_list, x, R2, N, Y):
         # of beta in Omega or beta = n where beta^(undefined_gen^-1) is undefined
         reach = C.omega + [C.n]
         for beta in reach:
-            if beta < N:
-                if beta == C.n or C.table[beta][A_dict_inv[undefined_gen]] is None:
-                    try_descendant(S, C, R1_c_list, R2, N, undefined_coset, \
-                            undefined_gen, beta, Y)
+            if beta < N and (
+                beta == C.n or C.table[beta][A_dict_inv[undefined_gen]] is None
+            ):
+                try_descendant(S, C, R1_c_list, R2, N, undefined_coset, \
+                        undefined_gen, beta, Y)
 
 
 def try_descendant(S, C, R1_c_list, R2, N, alpha, x, beta, Y):
@@ -971,17 +964,14 @@ def simplify_presentation(*args, change_gens=False):
             return gens, rels
         identity = gens[0].group.identity
     else:
-        if len(args) == 0:
-            m = "Not enough arguments"
-        else:
-            m = "Too many arguments"
+        m = "Not enough arguments" if len(args) == 0 else "Too many arguments"
         raise RuntimeError(m)
 
     prev_gens = []
     prev_rels = []
-    while not set(prev_rels) == set(rels):
+    while set(prev_rels) != set(rels):
         prev_rels = rels
-        while change_gens and not set(prev_gens) == set(gens):
+        while change_gens and set(prev_gens) != set(gens):
             prev_gens = gens
             gens, rels = elimination_technique_1(gens, rels, identity)
         rels = _simplify_relators(rels, identity)
@@ -1141,8 +1131,7 @@ def define_schreier_generators(C, homomorphism=False):
         # to which the schreier generators correspond to.
         _gens = {}
         # compute the schreier Traversal
-        tau = {}
-        tau[0] = f.identity
+        tau = {0: f.identity}
     C.P = [[None]*len(C.A) for i in range(C.n)]
     for alpha, x in product(C.omega, C.A):
         beta = C.table[alpha][C.A_dict[x]]
@@ -1188,8 +1177,12 @@ def reidemeister_relators(C):
         w = w.eliminate_words(order_1_gens, _all=True)
         rels[i] = w
 
-    C._schreier_generators = [i for i in C._schreier_generators
-                    if not (i in order_1_gens or i**-1 in order_1_gens)]
+    C._schreier_generators = [
+        i
+        for i in C._schreier_generators
+        if i not in order_1_gens and i ** -1 not in order_1_gens
+    ]
+
 
     # Tietze transformation 1 i.e TT_1
     # remove cyclic conjugate elements from relators
@@ -1329,7 +1322,8 @@ def reidemeister_presentation(fp_grp, H, C=None, homomorphism=False):
     """
     if not C:
         C = coset_enumeration_r(fp_grp, H)
-    C.compress(); C.standardize()
+    C.compress()
+    C.standardize()
     define_schreier_generators(C, homomorphism=homomorphism)
     reidemeister_relators(C)
     gens, rels = C._schreier_generators, C._reidemeister_relators
@@ -1339,9 +1333,7 @@ def reidemeister_presentation(fp_grp, H, C=None, homomorphism=False):
     C.reidemeister_relators = tuple(rels)
 
     if homomorphism:
-        _gens = []
-        for gen in gens:
-            _gens.append(C._schreier_gen_elem[str(gen)])
+        _gens = [C._schreier_gen_elem[str(gen)] for gen in gens]
         return C.schreier_generators, C.reidemeister_relators, _gens
 
     return C.schreier_generators, C.reidemeister_relators

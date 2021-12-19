@@ -43,8 +43,8 @@ def test_schur_partition():
 
 def test_schur_number():
     first_known_schur_numbers = {1: 1, 2: 4, 3: 13, 4: 44, 5: 160}
-    for k in first_known_schur_numbers:
-        assert SchurNumber(k) == first_known_schur_numbers[k]
+    for k, v in first_known_schur_numbers.items():
+        assert SchurNumber(k) == v
 
     assert SchurNumber(S.Infinity) == S.Infinity
     assert SchurNumber(0) == 0

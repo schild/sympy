@@ -83,21 +83,22 @@ class SumApprox(Optimization):
             else:
                 return add
 
-        if all(term.is_number or term in self.bounds for term in add.args):
-            bounds = [(term, term) if term.is_number else self.bounds[term] for term in add.args]
-            largest_abs_guarantee = 0
-            for lo, hi in bounds:
-                if lo <= 0 <= hi:
-                    continue
-                largest_abs_guarantee = max(largest_abs_guarantee,
-                                            min(abs(lo), abs(hi)))
-            new_terms = []
-            for term, (lo, hi) in zip(add.args, bounds):
-                if max(abs(lo), abs(hi)) >= largest_abs_guarantee*self.reltol:
-                    new_terms.append(term)
-            return add.func(*new_terms)
-        else:
+        if not all(term.is_number or term in self.bounds for term in add.args):
             return add
+        bounds = [(term, term) if term.is_number else self.bounds[term] for term in add.args]
+        largest_abs_guarantee = 0
+        for lo, hi in bounds:
+            if lo <= 0 <= hi:
+                continue
+            largest_abs_guarantee = max(largest_abs_guarantee,
+                                        min(abs(lo), abs(hi)))
+        new_terms = [
+            term
+            for term, (lo, hi) in zip(add.args, bounds)
+            if max(abs(lo), abs(hi)) >= largest_abs_guarantee * self.reltol
+        ]
+
+        return add.func(*new_terms)
 
 
 class SeriesApprox(Optimization):

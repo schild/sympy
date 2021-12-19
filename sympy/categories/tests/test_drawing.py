@@ -602,9 +602,7 @@ def test_DiagramGrid_pseudopod():
     assert grid[2, 3] is None
     assert grid[2, 4] is None
 
-    morphisms = {}
-    for f in [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]:
-        morphisms[f] = FiniteSet()
+    morphisms = {f: FiniteSet() for f in [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]}
     assert grid.morphisms == morphisms
 
 

@@ -197,7 +197,7 @@ class GrayCode(Basic):
                 yield self.current
             bbtc = (i ^ (i + 1))
             gbtc = (bbtc ^ (bbtc >> 1))
-            self._current = (self._current ^ gbtc)
+            self._current ^= gbtc
         self._current = 0
 
     def skip(self):

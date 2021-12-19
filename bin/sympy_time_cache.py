@@ -74,13 +74,10 @@ class TreeNode(object):
         f.write("fn=%s\n" % self.name())
         f.write("1 %s\n" % self.exclusive_time())
 
-        counter = 2
-        for child in self.children():
+        for counter, child in enumerate(self.children(), start=2):
             f.write("cfn=%s\n" % child.name())
             f.write("calls=1 1\n")
             f.write("%s %s\n" % (counter, child.time()))
-            counter += 1
-
         f.write("\n\n")
 
         for child in self.children():

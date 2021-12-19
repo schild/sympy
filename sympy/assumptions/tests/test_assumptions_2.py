@@ -25,11 +25,11 @@ def test_global():
     global_assumptions.add(x > 0)
     assert (x > 0) in global_assumptions
     global_assumptions.remove(x > 0)
-    assert not (x > 0) in global_assumptions
+    assert (x > 0) not in global_assumptions
     # same with multiple of assumptions
     global_assumptions.add(x > 0, y > 0)
     assert (x > 0) in global_assumptions
     assert (y > 0) in global_assumptions
     global_assumptions.clear()
-    assert not (x > 0) in global_assumptions
-    assert not (y > 0) in global_assumptions
+    assert (x > 0) not in global_assumptions
+    assert (y > 0) not in global_assumptions

@@ -217,11 +217,7 @@ class Sum(AddWithLimits, ExprWithIntLimits):
             return True
 
     def doit(self, **hints):
-        if hints.get('deep', True):
-            f = self.function.doit(**hints)
-        else:
-            f = self.function
-
+        f = self.function.doit(**hints) if hints.get('deep', True) else self.function
         # first make sure any definite limits have summation
         # variables with matching assumptions
         reps = {}
@@ -233,7 +229,7 @@ class Sum(AddWithLimits, ExprWithIntLimits):
             undo = {v: k for k, v in reps.items()}
             did = self.xreplace(reps).doit(**hints)
             if isinstance(did, tuple):  # when separate=True
-                did = tuple([i.xreplace(undo) for i in did])
+                did = tuple(i.xreplace(undo) for i in did)
             elif did is not None:
                 did = did.xreplace(undo)
             else:
@@ -259,21 +255,16 @@ class Sum(AddWithLimits, ExprWithIntLimits):
 
             newf = eval_sum(f, (i, a, b))
             if newf is None:
-                if f == self.function:
-                    zeta_function = self.eval_zeta_function(f, (i, a, b))
-                    if zeta_function is not None:
-                        return zeta_function
-                    return self
-                else:
+                if f != self.function:
                     return self.func(f, *self.limits[n:])
+                zeta_function = self.eval_zeta_function(f, (i, a, b))
+                if zeta_function is not None:
+                    return zeta_function
+                return self
             f = newf
 
-        if hints.get('deep', True):
-            # eval_sum could return partially unevaluated
-            # result with Piecewise.  In this case we won't
-            # doit() recursively.
-            if not isinstance(f, Piecewise):
-                return f.doit(**hints)
+        if hints.get('deep', True) and not isinstance(f, Piecewise):
+            return f.doit(**hints)
 
         return f
 
@@ -324,18 +315,13 @@ class Sum(AddWithLimits, ExprWithIntLimits):
         if x in a.free_symbols or x in b.free_symbols:
             return None
         df = Derivative(f, x, evaluate=True)
-        rv = self.func(df, limit)
-        return rv
+        return self.func(df, limit)
 
     def _eval_difference_delta(self, n, step):
         k, _, upper = self.args[-1]
         new_upper = upper.subs(n, n + step)
 
-        if len(self.args) == 2:
-            f = self.args[0]
-        else:
-            f = self.func(*self.args[:-1])
-
+        f = self.args[0] if len(self.args) == 2 else self.func(*self.args[:-1])
         return Sum(f, (k, upper + 1, new_upper)).doit()
 
     def _eval_simplify(self, **kwargs):
@@ -630,11 +616,20 @@ class Sum(AddWithLimits, ExprWithIntLimits):
             def _bounded_convergent_test(g1_n, g2_n):
                 try:
                     lim_val = limit_seq(g1_n, sym)
-                    if lim_val is not None and (lim_val.is_finite or (
-                        isinstance(lim_val, AccumulationBounds)
-                        and (lim_val.max - lim_val.min).is_finite)):
-                            if Sum(g2_n, (sym, lower_limit, upper_limit)).is_absolutely_convergent():
-                                return S.true
+                    if (
+                        lim_val is not None
+                        and (
+                            lim_val.is_finite
+                            or (
+                                isinstance(lim_val, AccumulationBounds)
+                                and (lim_val.max - lim_val.min).is_finite
+                            )
+                        )
+                        and Sum(
+                            g2_n, (sym, lower_limit, upper_limit)
+                        ).is_absolutely_convergent()
+                    ):
+                        return S.true
                 except NotImplementedError:
                     pass
 
@@ -949,10 +944,7 @@ def telescopic_direct(L, R, n, limits):
 
     """
     (i, a, b) = limits
-    s = 0
-    for m in range(n):
-        s += L.subs(i, a + m) + R.subs(i, b - m)
-    return s
+    return sum(L.subs(i, a + m) + R.subs(i, b - m) for m in range(n))
 
 
 def telescopic(L, R, limits):
@@ -1007,18 +999,19 @@ def eval_sum(f, limits):
         return f*(b - a + 1)
     if a == b:
         return f.subs(i, a)
-    if isinstance(f, Piecewise):
-        if not any(i in arg.args[1].free_symbols for arg in f.args):
-            # Piecewise conditions do not depend on the dummy summation variable,
-            # therefore we can fold:     Sum(Piecewise((e, c), ...), limits)
-            #                        --> Piecewise((Sum(e, limits), c), ...)
-            newargs = []
-            for arg in f.args:
-                newexpr = eval_sum(arg.expr, limits)
-                if newexpr is None:
-                    return None
-                newargs.append((newexpr, arg.cond))
-            return f.func(*newargs)
+    if isinstance(f, Piecewise) and all(
+        i not in arg.args[1].free_symbols for arg in f.args
+    ):
+        # Piecewise conditions do not depend on the dummy summation variable,
+        # therefore we can fold:     Sum(Piecewise((e, c), ...), limits)
+        #                        --> Piecewise((Sum(e, limits), c), ...)
+        newargs = []
+        for arg in f.args:
+            newexpr = eval_sum(arg.expr, limits)
+            if newexpr is None:
+                return None
+            newargs.append((newexpr, arg.cond))
+        return f.func(*newargs)
 
     if f.has(KroneckerDelta):
         from .delta import deltasummation, _has_simple_delta
@@ -1443,15 +1436,14 @@ def eval_sum_residue(f, i_a_b):
         n = denom.degree(i)
         a = denom.coeff_monomial(i**n)
         b = denom.coeff_monomial(i**(n-1))
-        shift = - b / a / n
-        return shift
+        return - b / a / n
 
     def get_residue_factor(numer, denom, alternating):
-        if not alternating:
-            residue_factor = (numer.as_expr() / denom.as_expr()) * cot(S.Pi * i)
-        else:
-            residue_factor = (numer.as_expr() / denom.as_expr()) * csc(S.Pi * i)
-        return residue_factor
+        return (
+            (numer.as_expr() / denom.as_expr()) * cot(S.Pi * i)
+            if not alternating
+            else (numer.as_expr() / denom.as_expr()) * csc(S.Pi * i)
+        )
 
     # We don't know how to deal with symbolic constants in summand
     if f.free_symbols - set([i]):
@@ -1566,7 +1558,7 @@ def eval_sum_residue(f, i_a_b):
 
 def _eval_matrix_sum(expression):
     f = expression.function
-    for n, limit in enumerate(expression.limits):
+    for limit in expression.limits:
         i, a, b = limit
         dif = b - a
         if dif.is_Integer:

@@ -100,12 +100,11 @@ def AlternatingGroup(n):
     if n % 2:
         a = list(range(1, n))
         a.append(0)
-        gen2 = a
     else:
         a = list(range(2, n))
         a.append(1)
         a.insert(0, 0)
-        gen2 = a
+    gen2 = a
     gens = [gen1, gen2]
     if gen1 == gen2:
         gens = gens[:1]
@@ -117,10 +116,7 @@ def AlternatingGroup(n):
     else:
         G._is_abelian = False
         G._is_nilpotent = False
-    if n < 5:
-        G._is_solvable = True
-    else:
-        G._is_solvable = False
+    G._is_solvable = n < 5
     G._degree = n
     G._is_transitive = True
     G._is_alt = True
@@ -226,10 +222,7 @@ def DihedralGroup(n):
     gen2 = _af_new(a)
     G = PermutationGroup([gen1, gen2])
     # if n is a power of 2, group is nilpotent
-    if n & (n-1) == 0:
-        G._is_nilpotent = True
-    else:
-        G._is_nilpotent = False
+    G._is_nilpotent = n & (n-1) == 0
     G._is_abelian = False
     G._is_solvable = True
     G._degree = n
@@ -295,10 +288,7 @@ def SymmetricGroup(n):
     else:
         G._is_abelian = False
         G._is_nilpotent = False
-    if n < 5:
-        G._is_solvable = True
-    else:
-        G._is_solvable = False
+    G._is_solvable = n < 5
     G._degree = n
     G._is_transitive = True
     G._is_sym = True

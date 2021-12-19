@@ -194,14 +194,12 @@ def test_coset_rank():
     gens_cube = [[1, 3, 5, 7, 0, 2, 4, 6], [1, 3, 0, 2, 5, 7, 4, 6]]
     gens = [Permutation(p) for p in gens_cube]
     G = PermutationGroup(gens)
-    i = 0
-    for h in G.generate(af=True):
+    for i, h in enumerate(G.generate(af=True)):
         rk = G.coset_rank(h)
         assert rk == i
         h1 = G.coset_unrank(rk, af=True)
         assert h == h1
-        i += 1
-    assert G.coset_unrank(48) == None
+    assert G.coset_unrank(48) is None
     assert G.coset_unrank(G.coset_rank(gens[0])) == gens[0]
 
 
@@ -429,10 +427,12 @@ def test_random_pr():
     D = DihedralGroup(6)
     r = 11
     n = 3
-    _random_prec_n = {}
-    _random_prec_n[0] = {'s': 7, 't': 3, 'x': 2, 'e': -1}
-    _random_prec_n[1] = {'s': 5, 't': 5, 'x': 1, 'e': -1}
-    _random_prec_n[2] = {'s': 3, 't': 4, 'x': 2, 'e': 1}
+    _random_prec_n = {
+        0: {'s': 7, 't': 3, 'x': 2, 'e': -1},
+        1: {'s': 5, 't': 5, 'x': 1, 'e': -1},
+        2: {'s': 3, 't': 4, 'x': 2, 'e': 1},
+    }
+
     D._random_pr_init(r, n, _random_prec_n=_random_prec_n)
     assert D._random_gens[11] == [0, 1, 2, 3, 4, 5]
     _random_prec = {'s': 2, 't': 9, 'x': 1, 'e': -1}

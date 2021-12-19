@@ -33,11 +33,10 @@ def get_paths(level=6):
     'sympy/*/*/*/*/*/test_*.py', 'sympy/*/*/*/*/*/*/test_*.py']
     """
     wildcards = ["/"]
-    for i in range(level):
+    for _ in range(level):
         wildcards.append(wildcards[-1] + "*/")
     my_dir = getcwd()
-    p = [my_dir + "/sympy" + x + "test_*.py" for x in wildcards]
-    return p
+    return [my_dir + "/sympy" + x + "test_*.py" for x in wildcards]
 
 
 def generate_test_script1(testlib="py.test"):

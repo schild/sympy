@@ -235,7 +235,7 @@ def _af_commutes_with(a, b):
 
     Permutation, commutes_with
     """
-    return not any(a[b[i]] != b[a[i]] for i in range(len(a) - 1))
+    return all(a[b[i]] == b[a[i]] for i in range(len(a) - 1))
 
 
 class Cycle(dict):
@@ -400,7 +400,7 @@ class Cycle(dict):
         cycles = Permutation(self).cyclic_form
         s = ''.join(str(tuple(c)) for c in cycles)
         big = self.size - 1
-        if not any(i == big for c in cycles for i in c):
+        if all(i != big for c in cycles for i in c):
             s += '(%s)' % big
         return 'Cycle%s' % s
 
@@ -422,7 +422,7 @@ class Cycle(dict):
         cycles = Permutation(self).cyclic_form
         s = ''.join(str(tuple(c)) for c in cycles)
         big = self.size - 1
-        if not any(i == big for c in cycles for i in c):
+        if all(i != big for c in cycles for i in c):
             s += '(%s)' % big
         s = s.replace(',', '')
         return s
@@ -1135,8 +1135,7 @@ class Permutation(Atom):
         cyclic_form = []
         for i in range(len(array_form)):
             if unchecked[i]:
-                cycle = []
-                cycle.append(i)
+                cycle = [i]
                 unchecked[i] = False
                 j = i
                 while unchecked[array_form[j]]:
@@ -1289,8 +1288,7 @@ class Permutation(Atom):
         which have _array_form
         """
         a = [x._array_form for x in args]
-        rv = cls._af_new(_af_rmuln(*a))
-        return rv
+        return cls._af_new(_af_rmuln(*a))
 
     def mul_inv(self, other):
         """
@@ -1636,22 +1634,22 @@ class Permutation(Atom):
         # list indices can be Integer or int; leave this
         # as it is (don't test or convert it) because this
         # gets called a lot and should be fast
-        if len(i) == 1:
-            i = i[0]
-            if not isinstance(i, Iterable):
-                i = as_int(i)
-                if i < 0 or i > self.size:
-                    raise TypeError(
-                        "{} should be an integer between 0 and {}"
-                        .format(i, self.size-1))
-                return self._array_form[i]
-            # P([a, b, c])
-            if len(i) != self.size:
+        if len(i) != 1:
+            # P(1, 2, 3)
+            return self*Permutation(Cycle(*i), size=self.size)
+        i = i[0]
+        if not isinstance(i, Iterable):
+            i = as_int(i)
+            if i < 0 or i > self.size:
                 raise TypeError(
-                    "{} should have the length {}.".format(i, self.size))
-            return [i[j] for j in self._array_form]
-        # P(1, 2, 3)
-        return self*Permutation(Cycle(*i), size=self.size)
+                    "{} should be an integer between 0 and {}"
+                    .format(i, self.size-1))
+            return self._array_form[i]
+        # P([a, b, c])
+        if len(i) != self.size:
+            raise TypeError(
+                "{} should have the length {}.".format(i, self.size))
+        return [i[j] for j in self._array_form]
 
     def atoms(self):
         """
@@ -1747,17 +1745,16 @@ class Permutation(Atom):
             i -= 1
         if i == -1:
             return None
-        else:
-            j = n - 1
-            while perm[j] < perm[i]:
-                j -= 1
+        j = n - 1
+        while perm[j] < perm[i]:
+            j -= 1
+        perm[j], perm[i] = perm[i], perm[j]
+        i += 1
+        j = n - 1
+        while i < j:
             perm[j], perm[i] = perm[i], perm[j]
             i += 1
-            j = n - 1
-            while i < j:
-                perm[j], perm[i] = perm[i], perm[j]
-                i += 1
-                j -= 1
+            j -= 1
         return self._af_new(perm)
 
     @classmethod
@@ -2088,8 +2085,7 @@ class Permutation(Atom):
         descents, inversions, min, max
         """
         a = self.array_form
-        pos = [i for i in range(len(a) - 1) if a[i] < a[i + 1]]
-        return pos
+        return [i for i in range(len(a) - 1) if a[i] < a[i + 1]]
 
     def descents(self):
         """
@@ -2110,8 +2106,7 @@ class Permutation(Atom):
         ascents, inversions, min, max
         """
         a = self.array_form
-        pos = [i for i in range(len(a) - 1) if a[i] > a[i + 1]]
-        return pos
+        return [i for i in range(len(a) - 1) if a[i] > a[i + 1]]
 
     def max(self):
         """
@@ -2217,8 +2212,8 @@ class Permutation(Atom):
                     if right >= n:
                         right = n - 1
                     inversions += _merge(arr, temp, i, i + k, right)
-                    i = i + k * 2
-                k = k * 2
+                    i += k * 2
+                k *= 2
         return inversions
 
     def commutator(self, x):
@@ -2416,7 +2411,7 @@ class Permutation(Atom):
         """
         a = self.array_form
 
-        return sum([j for j in range(len(a) - 1) if a[j] > a[j + 1]])
+        return sum(j for j in range(len(a) - 1) if a[j] > a[j + 1])
 
     def runs(self):
         """
@@ -2483,10 +2478,7 @@ class Permutation(Atom):
         inversion_vector = [0] * (n - 1)
 
         for i in range(n - 1):
-            val = 0
-            for j in range(i + 1, n):
-                if self_array_form[j] < self_array_form[i]:
-                    val += 1
+            val = sum(self_array_form[j] < self_array_form[i] for j in range(i + 1, n))
             inversion_vector[i] = val
         return inversion_vector
 
@@ -2526,10 +2518,7 @@ class Permutation(Atom):
                     k += 1
                 i += 1
             j1 = j + 1
-            if rank % 2 == 0:
-                rank = j1*rank + j1 - k
-            else:
-                rank = j1*rank + k - 1
+            rank = j1*rank + j1 - k if rank % 2 == 0 else j1*rank + k - 1
         return rank
 
     @classmethod
@@ -2614,13 +2603,12 @@ class Permutation(Atom):
                 else:
                     pi[st + d], pi[st + d + 1] = pi[st + d + 1], pi[st + d]
                     done = True
+            elif d == 0:
+                m -= 1
+                st += 1
             else:
-                if d == 0:
-                    m -= 1
-                    st += 1
-                else:
-                    pi[st + d], pi[st + d - 1] = pi[st + d - 1], pi[st + d]
-                    done = True
+                pi[st + d], pi[st + d - 1] = pi[st + d - 1], pi[st + d]
+                done = True
         if m == 0:
             return None
         return self._af_new(pi)
@@ -2698,8 +2686,7 @@ class Permutation(Atom):
                     continue
                 if self_prec_mat[i, j] * other_prec_mat[i, j] == 1:
                     n_prec += 1
-        d = self.size * (self.size - 1)//2 - n_prec
-        return d
+        return self.size * (self.size - 1)//2 - n_prec
 
     def get_adjacency_matrix(self):
         """
@@ -2787,8 +2774,7 @@ class Permutation(Atom):
                     continue
                 if self_adj_mat[i, j] * other_adj_mat[i, j] == 1:
                     n_adj += 1
-        d = self.size - n_adj - 1
-        return d
+        return self.size - n_adj - 1
 
     def get_positional_distance(self, other):
         """
@@ -2815,7 +2801,7 @@ class Permutation(Atom):
         b = other.array_form
         if len(a) != len(b):
             raise ValueError("The permutations must be of the same size.")
-        return sum([abs(a[i] - b[i]) for i in range(len(a))])
+        return sum(abs(a[i] - b[i]) for i in range(len(a)))
 
     @classmethod
     def josephus(cls, m, n, s=1):
@@ -2860,7 +2846,7 @@ class Permutation(Atom):
         Q = deque(list(range(n)))
         perm = []
         while len(Q) > max(s, 1):
-            for dp in range(m):
+            for _ in range(m):
                 Q.append(Q.popleft())
             perm.append(Q.popleft())
         perm.extend(list(Q))
@@ -3032,13 +3018,12 @@ def _merge(arr, temp, left, mid, right):
     while i < mid and j <= right:
         if arr[i] < arr[j]:
             temp[k] = arr[i]
-            k += 1
             i += 1
         else:
             temp[k] = arr[j]
-            k += 1
             j += 1
             inv_count += (mid -i)
+        k += 1
     while i < mid:
         temp[k] = arr[i]
         k += 1
@@ -3090,12 +3075,10 @@ class AppliedPermutation(Expr):
             raise ValueError("{} must be a Permutation instance."
                 .format(perm))
 
-        if evaluate:
-            if x.is_Integer:
-                return perm.apply(x)
+        if evaluate and x.is_Integer:
+            return perm.apply(x)
 
-        obj = super().__new__(cls, perm, x)
-        return obj
+        return super().__new__(cls, perm, x)
 
 
 @dispatch(Permutation, Permutation)

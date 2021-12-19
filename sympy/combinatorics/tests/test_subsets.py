@@ -41,13 +41,13 @@ def test_subset():
     i = 1
     while a.subset != Subset(['d'], ['a', 'b', 'c', 'd']).subset:
         a = a.next_lexicographic()
-        i = i + 1
+        i += 1
     assert i == 16
 
     i = 1
     while a.subset != Subset([], ['a', 'b', 'c', 'd']).subset:
         a = a.prev_lexicographic()
-        i = i + 1
+        i += 1
     assert i == 16
 
     raises(ValueError, lambda: Subset(['a', 'b'], ['a']))

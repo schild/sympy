@@ -199,14 +199,12 @@ class Token(CodegenAST):
     @classmethod
     def _construct(cls, attr, arg):
         """ Construct an attribute value from argument passed to ``__new__()``. """
-        # arg may be ``NoneToken()``, so comparation is done using == instead of ``is`` operator
-        if arg == None:
+        if arg is None:
             return cls.defaults.get(attr, none)
+        if isinstance(arg, Dummy):  # SymPy's replace uses Dummy instances
+            return arg
         else:
-            if isinstance(arg, Dummy):  # SymPy's replace uses Dummy instances
-                return arg
-            else:
-                return cls._get_constructor(attr)(arg)
+            return cls._get_constructor(attr)(arg)
 
     def __new__(cls, *args, **kwargs):
         # Pass through existing instances when given as sole argument
@@ -257,13 +255,12 @@ class Token(CodegenAST):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        for attr in self.__slots__:
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-        return True
+        return all(
+            getattr(self, attr) == getattr(other, attr) for attr in self.__slots__
+        )
 
     def _hashable_content(self):
-        return tuple([getattr(self, attr) for attr in self.__slots__])
+        return tuple(getattr(self, attr) for attr in self.__slots__)
 
     def __hash__(self):
         return super().__hash__()
@@ -452,7 +449,7 @@ class AssignmentBase(CodegenAST):
                 raise ValueError("Cannot assign a scalar to a matrix.")
             elif lhs.shape != rhs.shape:
                 raise ValueError("Dimensions of lhs and rhs do not align.")
-        elif rhs_is_mat and not lhs_is_mat:
+        elif rhs_is_mat:
             raise ValueError("Cannot assign a matrix to a scalar.")
 
 

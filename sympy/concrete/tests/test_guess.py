@@ -31,7 +31,7 @@ def test_find_simple_recurrence():
     f = Function('a')
     i = Symbol('n')
     a = [1, 1, 1]
-    for k in range(15): a.append(5*a[-1]-3*a[-2]+8*a[-3])
+    for _ in range(15): a.append(5*a[-1]-3*a[-2]+8*a[-3])
     assert find_simple_recurrence(a, A=f, N=i) == (
         -8*f(i) + 3*f(i + 1) - 5*f(i + 2) + f(i + 3))
     assert find_simple_recurrence([0, 2, 15, 74, 12, 3, 0,

@@ -256,7 +256,7 @@ def test_none():
         pass
     foo = Foo()
     assert foo != none
-    assert none == None
+    assert none is None
     assert none == NoneToken()
     assert none.func(*none.args) == none
 
@@ -581,7 +581,7 @@ def test_Print():
     ps2 = Print([n, x])
     assert ps2 == Print([n, x])
     assert ps2 != ps
-    assert ps2.format_string == None
+    assert ps2.format_string is None
 
 
 def test_FunctionPrototype_and_FunctionDefinition():

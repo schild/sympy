@@ -55,9 +55,11 @@ def main(ref_timing, limits=(10, .1)):
 
 def slow_function():
     t = time.time()
-    a = 0
-    for i in range(5):
-        a += sum([x**.3 - x**i for x in range(1000000) if x % 3 == 0])
+    a = sum(
+        sum(x ** 0.3 - x ** i for x in range(1000000) if x % 3 == 0)
+        for i in range(5)
+    )
+
     return time.time() - t
 
 

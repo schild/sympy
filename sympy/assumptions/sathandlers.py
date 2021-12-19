@@ -94,9 +94,8 @@ def exactlyonearg(symbol, fact, expr):
 
     """
     pred_args = [fact.subs(symbol, arg) for arg in expr.args]
-    res = Or(*[And(pred_args[i], *[~lit for lit in pred_args[:i] +
+    return Or(*[And(pred_args[i], *[~lit for lit in pred_args[:i] +
         pred_args[i+1:]]) for i in range(len(pred_args))])
-    return res
 
 
 ### Fact registry ###
@@ -180,12 +179,10 @@ class ClassFactRegistry:
         return ret1, ret2
 
     def __call__(self, expr):
-        ret = set()
-
         handlers1, handlers2 = self[type(expr)]
 
-        for h in handlers1:
-            ret.add(h(expr))
+        ret = {h(expr) for h in handlers1}
+
         for h in handlers2:
             ret.update(h(expr))
         return ret

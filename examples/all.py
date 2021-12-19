@@ -115,8 +115,7 @@ def __import__(name, globals=None, locals=None, fromlist=None):
 
 def load_example_module(example):
     """Loads modules based upon the given package name"""
-    mod = __import__(example)
-    return mod
+    return __import__(example)
 
 
 def run_examples(*, windowed=False, quiet=False, summary=True):
@@ -148,7 +147,7 @@ def run_examples(*, windowed=False, quiet=False, summary=True):
     if summary:
         show_summary(successes, failures, reporter=reporter)
 
-    return len(failures) == 0
+    return not failures
 
 
 def run_example(example, *, reporter=None):
